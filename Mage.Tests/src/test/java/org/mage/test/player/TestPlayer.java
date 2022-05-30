@@ -177,6 +177,7 @@ public class TestPlayer implements Player {
     }
 
     public void addTarget(String target) {
+        LOGGER.warn("invoking TestPlayer's addTarget method");
         targets.add(target);
     }
 
@@ -318,6 +319,7 @@ public class TestPlayer implements Player {
 
     @Override
     public boolean addTargets(Ability ability, Game game) {
+        LOGGER.warn("invoking TestPlayer's addTargets method");
         if (groupsForTargetHandling == null) {
             return true;
         }
@@ -3616,6 +3618,7 @@ public class TestPlayer implements Player {
 
     @Override
     public List<ActivatedAbility> getPlayable(Game game, boolean hidden) {
+        LOGGER.warn("invoking PlayerImpl->getPlayable()");
         return computerPlayer.getPlayable(game, hidden);
     }
 

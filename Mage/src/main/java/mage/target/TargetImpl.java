@@ -13,6 +13,7 @@ import mage.game.permanent.Permanent;
 import mage.players.Player;
 import mage.util.CardUtil;
 import mage.util.RandomUtil;
+import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -21,9 +22,9 @@ import java.util.*;
  */
 public abstract class TargetImpl implements Target {
 
+    private static final Logger LOGGER = Logger.getLogger(TargetImpl.class);
     protected final Map<UUID, Integer> targets = new LinkedHashMap<>();
     protected final Map<UUID, Integer> zoneChangeCounters = new HashMap<>();
-
     protected String targetName;
     protected Zone zone; // all targets will be filtered by that zone, don't use "multi-zone" filter
     protected int maxNumberOfTargets;
@@ -40,9 +41,6 @@ public abstract class TargetImpl implements Target {
     protected int targetTag; // can be set if other target check is needed (AnotherTargetPredicate)
     protected String chooseHint = null; // UI choose hints after target name
     protected boolean shouldReportEvents = true;
-
-    @Override
-    public abstract TargetImpl copy();
 
     public TargetImpl() {
         this(false);
@@ -72,6 +70,9 @@ public abstract class TargetImpl implements Target {
     }
 
     @Override
+    public abstract TargetImpl copy();
+
+    @Override
     public int getNumberOfTargets() {
         return this.minNumberOfTargets;
     }
@@ -82,13 +83,13 @@ public abstract class TargetImpl implements Target {
     }
 
     @Override
-    public int getMaxNumberOfTargets() {
-        return this.maxNumberOfTargets;
+    public void setMinNumberOfTargets(int minNumberOftargets) {
+        this.minNumberOfTargets = minNumberOftargets;
     }
 
     @Override
-    public void setMinNumberOfTargets(int minNumberOftargets) {
-        this.minNumberOfTargets = minNumberOftargets;
+    public int getMaxNumberOfTargets() {
+        return this.maxNumberOfTargets;
     }
 
     @Override
@@ -126,6 +127,11 @@ public abstract class TargetImpl implements Target {
     }
 
     @Override
+    public void setNotTarget(boolean notTarget) {
+        this.notTarget = notTarget;
+    }
+
+    @Override
     public String getTargetName() {
         return targetName + (isRandom() ? " chosen at random" : "");
     }
@@ -156,14 +162,14 @@ public abstract class TargetImpl implements Target {
     }
 
     @Override
-    public boolean isRequired(Ability ability) {
-        return ability == null || ability.isActivated() || !(ability.getAbilityType() == AbilityType.SPELL || ability.getAbilityType() == AbilityType.ACTIVATED);
-    }
-
-    @Override
     public void setRequired(boolean required) {
         this.required = required;
         this.requiredExplicitlySet = true;
+    }
+
+    @Override
+    public boolean isRequired(Ability ability) {
+        return ability == null || ability.isActivated() || !(ability.getAbilityType() == AbilityType.SPELL || ability.getAbilityType() == AbilityType.ACTIVATED);
     }
 
     @Override
@@ -482,6 +488,8 @@ public abstract class TargetImpl implements Target {
 
     @Override
     public UUID getFirstTarget() {
+        LOGGER.warn("invoking TargetImpl->getFirstTarget()");
+        LOGGER.warn("targets: " + targets);
         if (!targets.isEmpty()) {
             return targets.keySet().iterator().next();
         }
@@ -491,11 +499,6 @@ public abstract class TargetImpl implements Target {
     @Override
     public boolean stillLegalTarget(UUID id, Ability source, Game game) {
         return canTarget(id, source, game);
-    }
-
-    @Override
-    public void setNotTarget(boolean notTarget) {
-        this.notTarget = notTarget;
     }
 
     @Override
@@ -509,23 +512,23 @@ public abstract class TargetImpl implements Target {
     }
 
     @Override
-    public void setTargetController(UUID playerId) {
-        this.targetController = playerId;
-    }
-
-    @Override
     public UUID getTargetController() {
         return targetController;
     }
 
     @Override
-    public void setAbilityController(UUID playerId) {
-        this.abilityController = playerId;
+    public void setTargetController(UUID playerId) {
+        this.targetController = playerId;
     }
 
     @Override
     public UUID getAbilityController() {
         return abilityController;
+    }
+
+    @Override
+    public void setAbilityController(UUID playerId) {
+        this.abilityController = playerId;
     }
 
     @Override

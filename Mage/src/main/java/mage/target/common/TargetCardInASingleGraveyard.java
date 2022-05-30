@@ -8,6 +8,7 @@ import mage.game.Game;
 import mage.game.events.TargetEvent;
 import mage.players.Player;
 import mage.target.TargetCard;
+import org.apache.log4j.Logger;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -18,10 +19,12 @@ import java.util.UUID;
  */
 
 public class TargetCardInASingleGraveyard extends TargetCard {
+    private static final Logger LOGGER = Logger.getLogger(TargetCardInASingleGraveyard.class);
 
     public TargetCardInASingleGraveyard(int minNumTargets, int maxNumTargets, FilterCard filter) {
         // workaround to add extra message to final ability text
         super(minNumTargets, maxNumTargets, Zone.GRAVEYARD, filter.copy().withMessage(filter.getMessage() + " from a single graveyard"));
+        LOGGER.warn("invoked public TargetCardInASingleGraveyard->TargetCardInASingleGraveyard()");
     }
 
     private TargetCardInASingleGraveyard(final TargetCardInASingleGraveyard target) {
@@ -30,13 +33,17 @@ public class TargetCardInASingleGraveyard extends TargetCard {
 
     @Override
     public boolean canTarget(UUID id, Ability source, Game game) {
+        LOGGER.warn("invoking TargetCardInASingleGraveyard->canTarget()");
+        LOGGER.warn("passed in id: " + id);
         UUID firstTarget = this.getFirstTarget();
+        LOGGER.warn("firstTarget: " + firstTarget);
 
         // If a card is already targeted, ensure that this new target has the same owner as currently chosen target
         if (firstTarget != null) {
             Card card = game.getCard(firstTarget);
             Card targetCard = game.getCard(id);
-            if (card == null || targetCard == null || !card.isOwnedBy(targetCard.getOwnerId())) {
+            LOGGER.warn("are first target and current ID in the same graveyard: " + card.isOwnedBy(targetCard.getOwnerId()));
+            if (!card.isOwnedBy(targetCard.getOwnerId())) {
                 return false;
             }
         }

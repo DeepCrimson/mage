@@ -130,7 +130,7 @@ public final class SystemUtil {
     }
 
     private static String getCardsListForSpecialInform(Game game, Set<UUID> cardsList, List<String> commandParams) {
-        return getCardsListForSpecialInform(game, cardsList.stream().collect(Collectors.toList()), commandParams);
+        return getCardsListForSpecialInform(game, new ArrayList<>(cardsList), commandParams);
     }
 
     private static String getCardsListForSpecialInform(Game game, List<UUID> cardsList, List<String> commandParams) {

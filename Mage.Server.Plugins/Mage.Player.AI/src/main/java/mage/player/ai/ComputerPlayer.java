@@ -72,7 +72,7 @@ public class ComputerPlayer extends PlayerImpl implements Player {
     protected int PASSIVITY_PENALTY = 5; // Penalty value for doing nothing if some actions are available
 
     // debug only: set TRUE to debug simulation's code/games (on false sim thread will be stopped after few secs by timeout)
-    protected boolean COMPUTER_DISABLE_TIMEOUT_IN_GAME_SIMULATIONS = false;
+    protected boolean COMPUTER_DISABLE_TIMEOUT_IN_GAME_SIMULATIONS = true;
 
     private transient Map<Mana, Card> unplayable = new TreeMap<>();
     private transient List<Card> playableNonInstant = new ArrayList<>();
@@ -2862,6 +2862,7 @@ public class ComputerPlayer extends PlayerImpl implements Player {
     }
 
     private boolean tryAddTarget(Target target, UUID id, Ability source, Game game) {
+        log.warn("invoking first tryAddTarget");
         // workaround to to check successfull targets add
         int before = target.getTargets().size();
         target.addTarget(id, source, game);
@@ -2870,6 +2871,7 @@ public class ComputerPlayer extends PlayerImpl implements Player {
     }
 
     private boolean tryAddTarget(Target target, UUID id, int amount, Ability source, Game game) {
+        log.warn("invoking second tryAddTarget");
         // workaround to to check successfull targets add
         int before = target.getTargets().size();
         target.addTarget(id, amount, source, game);

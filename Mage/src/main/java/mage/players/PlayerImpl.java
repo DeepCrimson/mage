@@ -3475,15 +3475,13 @@ public abstract class PlayerImpl implements Player, Serializable {
                 copy.adjustCosts(game);
                 game.getContinuousEffects().costModification(copy, game);
             }
-            boolean canBeCastRegularly = true;
-            if (copy instanceof SpellAbility && copy.getManaCosts().isEmpty() && copy.getCosts().isEmpty()) {
-                // 117.6. Some mana costs contain no mana symbols. This represents an unpayable cost...
-                // 117.6a (...) If an alternative cost is applied to an unpayable cost,
-                // including an effect that allows a player to cast a spell without paying its mana cost, the alternative cost may be paid.
-                canBeCastRegularly = false;
-            }
+            boolean canBeCastRegularly = !(copy instanceof SpellAbility) || !copy.getManaCosts().isEmpty() || !copy.getCosts().isEmpty();
+            // 117.6. Some mana costs contain no mana symbols. This represents an unpayable cost...
+            // 117.6a (...) If an alternative cost is applied to an unpayable cost,
+            // including an effect that allows a player to cast a spell without paying its mana cost, the alternative cost may be paid.
             if (canBeCastRegularly) {
                 if (canPayMinimumManaCost(copy, availableMana, game)) {
+                    logger.warn("can pay minimum mana cost for " + copy + " so returning true in canPlay()");
                     return true;
                 }
             }
@@ -3516,6 +3514,7 @@ public abstract class PlayerImpl implements Player, Serializable {
 
     protected boolean canPayMinimumManaCost(ActivatedAbility ability, ManaOptions availableMana, Game game) {
         ManaOptions abilityOptions = ability.getMinimumCostToActivate(playerId, game);
+        logger.warn("minimum cost to activate " + ability + " is " + abilityOptions);
         if (abilityOptions.isEmpty()) {
             return true;
         } else {
@@ -3864,6 +3863,9 @@ public abstract class PlayerImpl implements Player, Serializable {
 
             // direct mode (with original controller)
             ActivatedAbility playAbility = findActivatedAbilityFromPlayable(object, availableMana, ability, game);
+            if (Objects.equals(object.getName(), "Ahn-Crop Invader")) {
+                logger.warn("invader's play abilities: " + playAbility);
+            }
             if (playAbility != null && !output.contains(playAbility)) {
                 output.add(playAbility);
                 continue;
@@ -4035,9 +4037,17 @@ public abstract class PlayerImpl implements Player, Serializable {
             List<ActivatedAbility> activatedAll = new ArrayList<>();
 
             // activated abilities from battlefield objects
+                    logger.warn("checking battlefield for available activated abilities...");
             if (fromAll || fromZone == Zone.BATTLEFIELD) {
                 for (Permanent permanent : game.getBattlefield().getAllActivePermanents()) {
+                    logger.warn("checking permanent " + permanent.getName());
+                    if (Objects.equals(permanent.getName(), "Night Soil")) {
+                        logger.debug("it's night soil!");
+                    }
                     boolean canUseActivated = permanent.canUseActivatedAbilities(game);
+                    if (canUseActivated) {
+                        logger.warn("can activate " + permanent.getName());
+                    }
                     List<ActivatedAbility> currentPlayable = new ArrayList<>();
                     getPlayableFromObjectAll(game, Zone.BATTLEFIELD, permanent, availableMana, currentPlayable);
                     for (ActivatedAbility ability : currentPlayable) {
