@@ -5,6 +5,8 @@ import mage.constants.Zone;
 import org.junit.Test;
 import org.mage.test.serverside.base.CardTestPlayerBase;
 
+import java.util.UUID;
+
 /**
  * @author TheElk801
  */
@@ -16,9 +18,9 @@ public class CripplingFearTest extends CardTestPlayerBase {
     @Test
     public void testChooseElf() {
         addCard(Zone.BATTLEFIELD, playerA, "Swamp", 4);
-        addCard(Zone.BATTLEFIELD, playerA, lion);
-        addCard(Zone.BATTLEFIELD, playerA, elf);
-        addCard(Zone.HAND, playerA, fear);
+        UUID lionCard = addCard(Zone.BATTLEFIELD, playerA, lion).get(0);
+        UUID elfCard = addCard(Zone.BATTLEFIELD, playerA, elf).get(0);
+        UUID fearCard = addCard(Zone.HAND, playerA, fear).get(0);
 
         setChoice(playerA, "Elf");
         castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, fear);

@@ -4,6 +4,8 @@ import mage.constants.PhaseStep;
 import mage.game.Game;
 import org.mage.test.serverside.base.CardTestCodePayload;
 
+import java.util.UUID;
+
 /**
  * @author BetaSteward_at_googlemail.com
  */
@@ -13,17 +15,19 @@ public class PlayerAction {
     private final int turnNum;
     private final PhaseStep step;
     private final String action;
+    private final UUID cardUUID;
     private final CardTestCodePayload codePayload; // special code to execute (e.g. on dynamic check)
 
     public PlayerAction(String actionName, int turnNum, PhaseStep step, String action) {
-        this(actionName, turnNum, step, action, null);
+        this(actionName, turnNum, step, action, null, null);
     }
 
-    public PlayerAction(String actionName, int turnNum, PhaseStep step, String action, CardTestCodePayload codePayload) {
+    public PlayerAction(String actionName, int turnNum, PhaseStep step, String action, UUID cardUUID, CardTestCodePayload codePayload) {
         this.actionName = actionName;
         this.turnNum = turnNum;
         this.step = step;
         this.action = action;
+        this.cardUUID = cardUUID;
         this.codePayload = codePayload;
     }
 

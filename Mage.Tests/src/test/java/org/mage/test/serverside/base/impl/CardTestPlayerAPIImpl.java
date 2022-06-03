@@ -368,7 +368,7 @@ public abstract class CardTestPlayerAPIImpl extends MageTestPlayerBase implement
         return player;
     }
 
-    private void addPlayerAction(TestPlayer player, int turnNum, PhaseStep step, String action) {
+    private void addPlayerAction(TestPlayer player, int turnNum, PhaseStep step, String action) { // "activate:Play Crippling Fear"
         PlayerAction playerAction = new PlayerAction("", turnNum, step, action);
         addPlayerAction(player, playerAction);
     }
@@ -412,7 +412,7 @@ public abstract class CardTestPlayerAPIImpl extends MageTestPlayerBase implement
      * @param codePayload code to execute
      */
     public void runCode(String info, int turnNum, PhaseStep step, TestPlayer player, CardTestCodePayload codePayload) {
-        PlayerAction playerAction = new PlayerAction(info, turnNum, step, RUN_PREFIX + RUN_COMMAND_CODE, codePayload);
+        PlayerAction playerAction = new PlayerAction(info, turnNum, step, RUN_PREFIX + RUN_COMMAND_CODE, null, codePayload);
         addPlayerAction(player, playerAction);
     }
 
