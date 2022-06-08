@@ -1,5 +1,6 @@
 package org.mage.test.cards.single.khm;
 
+import mage.cards.k.KarfellHarbinger;
 import mage.constants.PhaseStep;
 import mage.constants.Zone;
 import org.junit.Test;
@@ -24,6 +25,7 @@ public class KarfellHarbingerTest extends CardTestPlayerBase {
         addCard(Zone.BATTLEFIELD, playerA, "Island", 1);
         addCard(Zone.BATTLEFIELD, playerA, "Karfell Harbinger");
         addCard(Zone.HAND, playerA, "Augury Raven");
+        logger.warn("Hello!");
 
         activateAbility(1, PhaseStep.POSTCOMBAT_MAIN, playerA, "Fore");
 

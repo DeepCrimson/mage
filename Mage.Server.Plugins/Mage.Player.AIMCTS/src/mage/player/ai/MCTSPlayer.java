@@ -15,12 +15,11 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- *
  * @author BetaSteward_at_googlemail.com
  */
 public class MCTSPlayer extends ComputerPlayer {
 
-     private static final Logger logger = Logger.getLogger(MCTSPlayer.class);
+    private static final Logger logger = Logger.getLogger(MCTSPlayer.class);
 
     protected PassAbility pass = new PassAbility();
 
@@ -55,22 +54,19 @@ public class MCTSPlayer extends ComputerPlayer {
     public List<Ability> getPlayableOptions(Game game) {
         List<Ability> all = new ArrayList<>();
         List<ActivatedAbility> playables = getPlayableAbilities(game);
-        for (ActivatedAbility ability: playables) {
+        for (ActivatedAbility ability : playables) {
             List<Ability> options = game.getPlayer(playerId).getPlayableOptions(ability, game);
             if (options.isEmpty()) {
                 if (!ability.getManaCosts().getVariableCosts().isEmpty()) {
                     simulateVariableCosts(ability, all, game);
-                }
-                else {
+                } else {
                     all.add(ability);
                 }
-            }
-            else {
-                for (Ability option: options) {
+            } else {
+                for (Ability option : options) {
                     if (!ability.getManaCosts().getVariableCosts().isEmpty()) {
                         simulateVariableCosts(option, all, game);
-                    }
-                    else {
+                    } else {
                         all.add(option);
                     }
                 }
@@ -141,7 +137,7 @@ public class MCTSPlayer extends ComputerPlayer {
 
     private List<List<UUID>> copyEngagement(List<List<UUID>> engagement) {
         List<List<UUID>> newEngagement = new ArrayList<>();
-        for (List<UUID> group: engagement) {
+        for (List<UUID> group : engagement) {
             newEngagement.add(new ArrayList<>(group));
         }
         return newEngagement;
@@ -158,7 +154,7 @@ public class MCTSPlayer extends ComputerPlayer {
         List<Permanent> remaining = remove(blockers, blocker);
         for (int i = 0; i < numGroups; i++) {
             if (game.getCombat().getGroups().get(i).canBlock(blocker, game)) {
-                List<List<UUID>>newEngagement = copyEngagement(engagement);
+                List<List<UUID>> newEngagement = copyEngagement(engagement);
                 newEngagement.get(i).add(blocker.getId());
                 engagements.add(newEngagement);
 //                    logger.debug("simulating -- found redundant block combination");

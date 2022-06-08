@@ -316,7 +316,14 @@ public abstract class CardTestPlayerAPIImpl extends MageTestPlayerBase implement
             // add cards to game
             for (Player player : currentGame.getPlayers().values()) {
                 TestPlayer testPlayer = (TestPlayer) player;
+                logger.warn("currently cheating to apply the following commands: " + getCommands(testPlayer));
                 currentGame.cheat(testPlayer.getId(), getCommands(testPlayer));
+                logger.warn("now also cheating to apply more stuff");
+                logger.warn("library cards: " + getLibraryCards(testPlayer));
+                logger.warn("hand cards: " + getHandCards(testPlayer));
+                logger.warn("battlefield cards: " + getBattlefieldCards(testPlayer));
+                logger.warn("graveyard cards: " + getGraveCards(testPlayer));
+                logger.warn("command cards: " + getCommandCards(testPlayer));
                 currentGame.cheat(testPlayer.getId(), getLibraryCards(testPlayer), getHandCards(testPlayer),
                         getBattlefieldCards(testPlayer), getGraveCards(testPlayer), getCommandCards(testPlayer));
             }
