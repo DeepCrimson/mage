@@ -2,7 +2,6 @@ package mage.target.common;
 
 import mage.abilities.Ability;
 import mage.cards.Card;
-import mage.constants.CommanderCardType;
 import mage.constants.Zone;
 import mage.filter.FilterCard;
 import mage.game.Game;
@@ -11,8 +10,9 @@ import mage.players.Player;
 import mage.target.TargetCard;
 import org.apache.log4j.Logger;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * @author LevelX2
@@ -55,10 +55,10 @@ public class TargetCardInASingleGraveyard extends TargetCard {
     /**
      * Set of UUIDs of all possible targets
      *
-     * @param sourceControllerId    UUID of the ability's controller
-     * @param source                Ability which requires the targets
-     * @param game                  Current game
-     * @return                      Set of the UUIDs of possible targets
+     * @param sourceControllerId UUID of the ability's controller
+     * @param source             Ability which requires the targets
+     * @param game               Current game
+     * @return Set of the UUIDs of possible targets
      */
     @Override
     public Set<UUID> possibleTargets(UUID sourceControllerId, Ability source, Game game) {
@@ -75,8 +75,7 @@ public class TargetCardInASingleGraveyard extends TargetCard {
                     continue;
                 }
 
-                UUID ownerOfCardId = targetCard.getOwnerId();
-                controllerOfFirstTarget = ownerOfCardId;
+                controllerOfFirstTarget = targetCard.getOwnerId();
                 break; // Only need the first UUID since they will all be the same
             }
         }

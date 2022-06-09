@@ -18,19 +18,15 @@ public final class SpiritToken extends TokenImpl {
         power = new MageInt(1);
         toughness = new MageInt(1);
 
-        availableImageSetCodes = Arrays.asList("C16", "CHK", "EMA", "EXP", "NEO", "SOK", "V12", "VOC");
+        availableImageSetCodes = Arrays.asList("C16", "EMA", "NEO", "VOC", "A25");
     }
 
     @Override
     public void setExpansionSetCodeForImage(String code) {
         super.setExpansionSetCodeForImage(code);
 
-        if (getOriginalExpansionSetCode() != null && getOriginalExpansionSetCode().equals("BOK")) {
-            setTokenType(2);
-        }
-
         if (getOriginalExpansionSetCode() != null && getOriginalExpansionSetCode().equals("EMA")) {
-            setTokenType(2);
+            setTokenType(1);
         }
 
         if (getOriginalExpansionSetCode() != null && getOriginalExpansionSetCode().equals("NEO")) {
@@ -38,6 +34,14 @@ public final class SpiritToken extends TokenImpl {
         }
 
         if (getOriginalExpansionSetCode() != null && getOriginalExpansionSetCode().equals("C16")) {
+            setTokenType(1);
+        }
+
+        if (getOriginalExpansionSetCode() != null && getOriginalExpansionSetCode().equals("A25")) {
+            setTokenType(1);
+        }
+
+        if (getOriginalExpansionSetCode() != null && getOriginalExpansionSetCode().equals("VOC")) {
             setTokenType(1);
         }
     }
