@@ -39,6 +39,10 @@ public class FinalPunishmentTest extends CardTestPlayerBase {
         addCard(Zone.BATTLEFIELD, playerA, bob);
 
         attack(1, playerA, bob, playerB);
+
+        execute();
+        assertLife(playerB, 18);
+
         castSpell(1, PhaseStep.POSTCOMBAT_MAIN, playerA, finalPunishment, playerB);
         setStopAt(1, PhaseStep.END_TURN);
         execute();
