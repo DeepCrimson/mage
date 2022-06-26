@@ -14,7 +14,6 @@ import mage.game.mulligan.MulliganType;
 import mage.player.ai.ComputerPlayer;
 import mage.players.Player;
 import mage.util.RandomUtil;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mage.test.serverside.base.MageTestBase;
 
@@ -23,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 /**
  * @author ayratn
@@ -33,12 +33,12 @@ public class TestPlayRandomGame extends MageTestBase {
     private static final int DECK_SIZE = 40;
 
     @Test
-    @Ignore
     public void playGames() throws GameException, FileNotFoundException {
-        for (int i = 1; i < 100; i++) {
-            logger.info("Playing game: " + i);
+//        for (int i = 1; i < 100; i++) {
+//            logger.info("Playing game: " + i);
+            logger.info("Playing game 1");
             playOneGame();
-        }
+//        }
     }
 
     private void playOneGame() throws GameException, FileNotFoundException, IllegalArgumentException {
@@ -61,11 +61,17 @@ public class TestPlayRandomGame extends MageTestBase {
         game.addPlayer(computerB, deck2);
         game.loadCards(deck2.getCards(), computerB.getId());
 
+        // Print deck.getCards() with newline separator
+        logger.info("Deck: " + deck.getCards().stream().map(Card::getName).collect(Collectors.joining("\n")));
+        // Print deck2.getCards() with newline separator
+        logger.info("Deck2: " + deck2.getCards().stream().map(Card::getName).collect(Collectors.joining("\n")));
+
         long t1 = System.nanoTime();
         GameOptions options = new GameOptions();
         options.testMode = true;
         game.setGameOptions(options);
         game.start(computerA.getId());
+
         long t2 = System.nanoTime();
 
         logger.info("Winner: " + game.getWinner());

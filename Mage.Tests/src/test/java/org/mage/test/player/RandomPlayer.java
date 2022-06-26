@@ -6,6 +6,7 @@ import mage.abilities.costs.mana.GenericManaCost;
 import mage.cards.Card;
 import mage.cards.Cards;
 import mage.choices.Choice;
+import mage.constants.CardType;
 import mage.constants.Outcome;
 import mage.constants.RangeOfInfluence;
 import mage.game.Game;
@@ -19,6 +20,7 @@ import mage.target.Target;
 import mage.target.TargetAmount;
 import mage.target.TargetCard;
 import mage.util.RandomUtil;
+import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.*;
@@ -29,6 +31,8 @@ import java.util.*;
  * @author BetaSteward_at_googlemail.com
  */
 public class RandomPlayer extends ComputerPlayer {
+
+    protected static Logger logger = Logger.getLogger(ComputerPlayer.class);
 
     private final boolean isSimulatedPlayer;
     private int actionCount = 0;
@@ -62,6 +66,18 @@ public class RandomPlayer extends ComputerPlayer {
     public boolean priority(Game game) {
         boolean didSomething = false;
         Ability ability = getAction(game);
+        if (ability != null && ability != pass) {
+            // If the ability belongs to a basic land:
+            if (ability.getSourceId() != null && game.getPermanent(ability.getSourceId()) != null) {
+                Permanent permanent = game.getPermanent(ability.getSourceId());
+                if (permanent.getCardType().get(0) != CardType.LAND) {
+
+                    // log the current turn and the ability that is being played
+                    logger.info(game.getTurnNum() + ": " + getName() + " is playing " + ability.getSourceObject(game) + " ability " + ability.getRule());
+                    didSomething = true;
+                }
+            }
+        }
         if (!(ability instanceof PassAbility)) {
             didSomething = true;
         }
