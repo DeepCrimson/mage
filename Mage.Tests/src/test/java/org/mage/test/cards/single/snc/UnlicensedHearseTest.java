@@ -1,7 +1,9 @@
 package org.mage.test.cards.single.snc;
 
+import mage.abilities.Ability;
 import mage.constants.PhaseStep;
 import mage.constants.Zone;
+import mage.game.permanent.Permanent;
 import org.junit.Before;
 import org.junit.Test;
 import org.mage.test.serverside.base.CardTestPlayerBase;
@@ -40,8 +42,11 @@ public class UnlicensedHearseTest extends CardTestPlayerBase {
      */
     @Test
     public void testExileOneCardFromGraveyard() {
+        Permanent unlicensedHearse = currentGame.getPermanent(unlicensedHearseID);
+        Ability ability = unlicensedHearse.getAbilities().get(0);
+        String abilityName = ability.getRule();
         activateAbility(1, PhaseStep.PRECOMBAT_MAIN, playerA,
-                "{T}: Exile up to two target cards from a single graveyard.",
+                abilityName,
                 "Grizzly Bears");
 
         setStrictChooseMode(true);
