@@ -1,0 +1,23 @@
+version: "3.5"
+services:
+  backend:
+    image: mage-db-and-server
+    build:
+      context: .
+      dockerfile: Dockerfile-backend
+    ports:
+      - "8082:8082"
+    volumes:
+      - ${APPLICATION_ROOT_FOLDER}:/usr/src/app
+    # Keep the container running and tail all logs
+    command: tail -F /dev/null
+  frontend:
+    image: mage-swing-client
+    build:
+      context: .
+      dockerfile: Dockerfile-frontend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ${APPLICATION_ROOT_FOLDER}:/usr/src/app
+    command: tail -F /dev/null
