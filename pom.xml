@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mage</groupId>
@@ -50,67 +50,14 @@
                     </archive>
                 </configuration>
             </plugin>
-
-            <!-- JaCoCo Code Coverage report generation -->
-            <!-- Examples: http://tdongsi.github.io/blog/2017/09/23/jacoco-in-maven-project/ -->
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.7</version>
-                <executions>
-                    <execution>
-                        <!-- prepare command line to inject in java agent (collect code executing stats) -->
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <!-- generate current module's report -->
-                        <id>generate-code-coverage-report</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <!-- generate combined report (current and dependency modules) -->
-                        <id>report-aggregate</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>report-aggregate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
-
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.0.0-M5</version>
-                    <!--
-                    for compatible with jacoco code coverage - argLine moved to properties section
-                    <configuration>
-                        <argLine>-Dfile.encoding=UTF-8</argLine>
-                    </configuration>
-                    -->
-                </plugin>
-            </plugins>
-        </pluginManagement>
     </build>
 
     <modules>
         <module>Mage</module>
-        <module>Mage.Common</module>
         <module>Mage.Server</module>
         <module>Mage.Sets</module>
-        <module>Mage.Client</module>
-        <module>Mage.Plugins</module>
-        <module>Mage.Server.Plugins</module>
         <module>Mage.Server.Console</module>
-        <module>Mage.Tests</module>
         <module>Mage.Verify</module>
     </modules>
 
@@ -138,83 +85,26 @@
         <argLine>-Dfile.encoding=UTF-8</argLine>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
-
-        <!--
-            JaCoCo code coverage disabled by default. If you need to generate
-            execute stats and reports then run tests by maven command
-            like "mvn install -Djacoco.skip=false".
-            Stats:
-            - load coverage data for IntelliJ IDEA from ./target/jacoco.exec
-            - web report in ./target/site/jacoco/index.html
-            - for sonar support see below
-        -->
-        <jacoco.skip>true</jacoco.skip>
-
-        <!-- Sonar settings for code coverage. Must be only one report for all modules (use report-aggregate goal report from JaCoCo) -->
-        <aggregate.report.dir>Mage.Verify/target/site/jacoco-aggregate/jacoco.xml</aggregate.report.dir>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../${aggregate.report.dir}</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
-    <dependencies>
-        <!-- GLOBAL dependencies - used in all xmage modules (no need to add it to child modules) -->
-        <dependency>
-            <!-- logs support (log4j as engine + slf4j as facade) -->
-            <!-- TODO: migrate from log4j to logback code usage (see SLF4J Migrator http://www.slf4j.org/migrator.html) -->
-            <!-- TODO: migrate log4j configs to logback xml (see properties to xml translation http://logback.qos.ch/translator/ -->
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.32</version>
-        </dependency>
-
-        <dependency>
-            <!-- database support - ORM -->
-            <groupId>com.j256.ormlite</groupId>
-            <artifactId>ormlite-jdbc</artifactId>
-            <version>5.7</version>
-        </dependency>
-        <dependency>
-            <!-- database support - H2 db engine (main db) -->
-            <!-- WARNING, do not update db engine (stable: 1.4.197) cause compatibility issues, see https://github.com/h2database/h2database/issues/2078 -->
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>1.4.197</version>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <!-- junit 4 tests -->
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <version>5.8.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <!-- junit 5 tests -->
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.8.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <!-- write asserts in unit tests like a real language -->
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>3.21.0</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>1.3.2.RELEASE</version>
+    </parent>
 
     <dependencyManagement>
         <!-- OTHER dependencies - you must add it to child modules manually (copy groupId and artifactId without scope and version) -->
         <!-- write shared libs from all childs here to version control -->
         <dependencies>
             <dependency>
-                <!-- junit compatible dependencies (xmage uses junit 5 platform for all v4 and v5 tests) -->
-                <groupId>org.junit</groupId>
-                <artifactId>junit-bom</artifactId>
-                <version>5.8.1</version>
-                <type>pom</type>
-                <scope>import</scope>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-data-jpa</artifactId>
+            </dependency>
+
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
             </dependency>
             <dependency>
                 <!-- json support -->

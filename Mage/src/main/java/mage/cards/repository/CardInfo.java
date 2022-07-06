@@ -1,8 +1,5 @@
 package mage.cards.repository;
 
-import com.j256.ormlite.field.DataType;
-import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.table.DatabaseTable;
 import mage.ObjectColor;
 import mage.abilities.SpellAbility;
 import mage.cards.*;
@@ -11,7 +8,6 @@ import mage.cards.mock.MockSplitCard;
 import mage.constants.*;
 import mage.util.CardUtil;
 import mage.util.SubTypes;
-import org.apache.log4j.Logger;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -21,7 +17,6 @@ import java.util.stream.Collectors;
  *
  * @author North
  */
-@DatabaseTable(tableName = "card")
 public class CardInfo {
 
     private static final int MAX_RULE_LENGTH = 750;
@@ -32,86 +27,49 @@ public class CardInfo {
     public static final String SPLIT_MANA_SEPARATOR_FULL = "{" + SPLIT_MANA_SEPARATOR_SHORT + "}";
     public static final String SPLIT_MANA_SEPARATOR_RENDER = " / ";
 
-    @DatabaseField(indexName = "name_index")
     protected String name;
     /**
      * lower_name exists to speed up importing decks, specifically to provide an indexed column.
      * H2 does not support expressions in indices, so we need a physical column.
      */
-    @DatabaseField(indexName = "lower_name_index")
     protected String lower_name;
-    @DatabaseField(indexName = "setCode_cardNumber_index")
     protected String setCode;
-    @DatabaseField(indexName = "setCode_cardNumber_index")
     protected String cardNumber;
     /**
      * Fast access to numerical card number (number without prefix/postfix: 123b -> 123)
      */
-    @DatabaseField(indexName = "cardNumberAsInt_index")
     protected int cardNumberAsInt;
-    @DatabaseField(indexName = "className_index")
     protected String className;
-    @DatabaseField
     protected String power;
-    @DatabaseField
     protected String toughness;
-    @DatabaseField
     protected String startingLoyalty;
-    @DatabaseField
     protected int manaValue;
-    @DatabaseField(dataType = DataType.ENUM_STRING)
     protected Rarity rarity;
-    @DatabaseField
     protected String types;
-    @DatabaseField
     protected String subtypes;
-    @DatabaseField
     protected String supertypes;
-    @DatabaseField
     protected String manaCosts;
-    @DatabaseField(dataType = DataType.STRING, width = MAX_RULE_LENGTH)
     protected String rules;
-    @DatabaseField
     protected boolean black;
-    @DatabaseField
     protected boolean blue;
-    @DatabaseField
     protected boolean green;
-    @DatabaseField
     protected boolean red;
-    @DatabaseField
     protected boolean white;
-    @DatabaseField
     protected String frameColor;
-    @DatabaseField
     protected String frameStyle;
-    @DatabaseField
     protected boolean variousArt;
-    @DatabaseField
     protected boolean splitCard;
-    @DatabaseField
     protected boolean splitCardFuse;
-    @DatabaseField
     protected boolean splitCardAftermath;
-    @DatabaseField
     protected boolean splitCardHalf;
-    @DatabaseField
     protected boolean flipCard;
-    @DatabaseField
     protected boolean doubleFaced;
-    @DatabaseField(indexName = "name_index")
     protected boolean nightCard;
-    @DatabaseField
     protected String flipCardName;
-    @DatabaseField
     protected String secondSideName;
-    @DatabaseField
     protected boolean adventureCard;
-    @DatabaseField
     protected String adventureSpellName;
-    @DatabaseField
     protected boolean modalDoubleFacesCard;
-    @DatabaseField
     protected String modalDoubleFacesSecondSideName;
 
     // if you add new field with card side name then update CardRepository.addNewNames too
@@ -227,7 +185,6 @@ public class CardInfo {
                     break;
                 }
             }
-            Logger.getLogger(CardInfo.class).warn("Card rule text was cut - cardname: " + card.getName());
             this.setRules(shortRules);
         } else {
             this.setRules(rulesList);
@@ -247,7 +204,11 @@ public class CardInfo {
     }
 
     public Card getCard() {
-        return CardImpl.createCard(className, new CardSetInfo(name, setCode, cardNumber, rarity, new CardGraphicInfo(FrameStyle.valueOf(frameStyle), variousArt)));
+        try {
+            return CardImpl.createCard(Class.forName(className), new CardSetInfo(name, setCode, cardNumber, rarity, new CardGraphicInfo(FrameStyle.valueOf(frameStyle), variousArt)));
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Card getMockCard() {

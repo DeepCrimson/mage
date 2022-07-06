@@ -3,10 +3,7 @@ package mage.game.events;
 import mage.cards.Cards;
 import mage.cards.decks.Deck;
 import mage.game.Game;
-import mage.game.draft.Draft;
 import mage.game.match.MatchOptions;
-import mage.game.tournament.MultiplayerRound;
-import mage.game.tournament.TournamentPairing;
 
 import java.io.Serializable;
 import java.util.EventObject;
@@ -18,20 +15,17 @@ import java.util.UUID;
 public class TableEvent extends EventObject implements ExternalEvent, Serializable {
 
     public enum EventType {
-        UPDATE, INFO, STATUS, START_DRAFT, START_MATCH, SIDEBOARD, CONSTRUCT, SUBMIT_DECK, END, END_GAME_INFO, ERROR,
+        UPDATE, INFO, STATUS, START_MATCH, SIDEBOARD, CONSTRUCT, SUBMIT_DECK, END, END_GAME_INFO, ERROR,
         INIT_TIMER, RESUME_TIMER, PAUSE_TIMER, CHECK_STATE_PLAYERS, START_MULTIPLAYER_MATCH
     }
 
     private Game game;
-    private Draft draft;
-    private EventType eventType;
+    private final EventType eventType;
     private String message;
     private Exception ex;
     private Cards cards;
     private UUID playerId;
     private Deck deck;
-    private TournamentPairing pair;
-    private MultiplayerRound round;
     private MatchOptions options;
     private int timeout;
     private boolean withTime;
@@ -82,33 +76,8 @@ public class TableEvent extends EventObject implements ExternalEvent, Serializab
         this.timeout = timeout;
     }
 
-    public TableEvent(EventType eventType, String message, Draft draft) {
-        super(draft);
-        this.draft = draft;
-        this.message = message;
-        this.eventType = eventType;
-    }
-
-    public TableEvent(EventType eventType, TournamentPairing pair, MatchOptions options) {
-        super(options);
-        this.pair = pair;
-        this.options = options;
-        this.eventType = eventType;
-    }
-
-    public TableEvent(EventType eventType, MultiplayerRound round, MatchOptions options) {
-        super(options);
-        this.round = round;
-        this.options = options;
-        this.eventType = eventType;
-    }
-
     public Game getGame() {
         return game;
-    }
-
-    public Draft getDraft() {
-        return draft;
     }
 
     public EventType getEventType() {
@@ -133,14 +102,6 @@ public class TableEvent extends EventObject implements ExternalEvent, Serializab
 
     public Deck getDeck() {
         return deck;
-    }
-
-    public TournamentPairing getPair() {
-        return pair;
-    }
-
-    public MultiplayerRound getMultiplayerRound() {
-        return round;
     }
 
     public MatchOptions getMatchOptions() {

@@ -1,7 +1,6 @@
 package mage.choices;
 
 import mage.util.RandomUtil;
-import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -9,8 +8,6 @@ import java.util.*;
  * @author BetaSteward_at_googlemail.com, JayDi85
  */
 public class ChoiceImpl implements Choice {
-
-    private static final Logger logger = Logger.getLogger(Choice.class);
 
     protected boolean chosenNormal;
     protected boolean chosenSpecial;
@@ -343,7 +340,6 @@ public class ChoiceImpl implements Choice {
         if (this.choices.isEmpty() && this.keyChoices.isEmpty()) {
             // it can be a server problems or wrong card code
             this.required = false;
-            logger.error("Empty choice dialog in " + this.getClass().getCanonicalName(), new Throwable());
         }
     }
 }

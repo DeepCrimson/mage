@@ -2,8 +2,6 @@ package mage.watchers;
 
 import mage.game.Game;
 import mage.game.events.GameEvent;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 
 import java.util.HashMap;
 
@@ -11,8 +9,6 @@ import java.util.HashMap;
  * @author BetaSteward_at_googlemail.com
  */
 public class Watchers extends HashMap<String, Watcher> {
-
-    private static Logger logger = LogManager.getLogger(Watcher.class.getSimpleName());
 
     public Watchers() {
     }
@@ -48,7 +44,6 @@ public class Watchers extends HashMap<String, Watcher> {
         if (containsKey(key)) {
             return super.get(key);
         }
-        logger.error(key + " not found in watchers", new Throwable());
         return null;
     }
 }

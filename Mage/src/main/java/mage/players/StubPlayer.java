@@ -17,10 +17,8 @@ import mage.constants.RangeOfInfluence;
 import mage.filter.FilterMana;
 import mage.game.Game;
 import mage.game.combat.CombatGroup;
-import mage.game.draft.Draft;
 import mage.game.match.Match;
 import mage.game.permanent.Permanent;
-import mage.game.tournament.Tournament;
 import mage.target.Target;
 import mage.target.TargetAmount;
 import mage.target.TargetCard;
@@ -217,18 +215,8 @@ public class StubPlayer extends PlayerImpl implements Player {
     }
 
     @Override
-    public void construct(Tournament tournament, Deck deck) {
-
-    }
-
-    @Override
-    public void pickCard(List<Card> cards, Deck deck, Draft draft) {
-
-    }
-    
-    @Override
     public void addPhyrexianToColors(FilterMana colors) {
-        
+
     }
 
     @Override

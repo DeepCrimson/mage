@@ -26,7 +26,6 @@ import mage.players.Player;
 import mage.target.common.TargetCardInHand;
 import mage.util.CardUtil;
 import mage.util.trace.TraceInfo;
-import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.*;
@@ -37,8 +36,6 @@ import java.util.stream.Collectors;
  * @author BetaSteward_at_googlemail.com
  */
 public class ContinuousEffects implements Serializable {
-
-    private static final Logger logger = Logger.getLogger(ContinuousEffects.class);
 
     private long order = 0;
 
@@ -189,8 +186,6 @@ public class ContinuousEffects implements Serializable {
                                 break;
                             }
                         }
-                    } else {
-                        logger.error("No abilities for continuous effect: " + effect);
                     }
                     break;
                 default:
@@ -589,7 +584,7 @@ public class ContinuousEffects implements Serializable {
             if (possibleApprovingObjects.size() == 1) {
                 return possibleApprovingObjects.iterator().next();
             } else if (possibleApprovingObjects.size() > 1) {
-                // Select the ability that you use to permit the action                
+                // Select the ability that you use to permit the action
                 Map<String, String> keyChoices = new HashMap<>();
                 for (ApprovingObject approvingObject : possibleApprovingObjects) {
                     MageObject mageObject = game.getObject(approvingObject.getApprovingAbility().getSourceId());
@@ -1283,10 +1278,8 @@ public class ContinuousEffects implements Serializable {
 
     public synchronized void addEffect(ContinuousEffect effect, Ability source) {
         if (effect == null) {
-            logger.error("Effect is null: " + source.toString());
             return;
         } else if (source == null) {
-            logger.warn("Adding effect without ability : " + effect);
         }
         switch (effect.getEffectType()) {
             case REPLACEMENT:
@@ -1344,7 +1337,6 @@ public class ContinuousEffects implements Serializable {
                             ability.setControllerId(controllerId);
                         }
                     } else if (ability.getZone() != Zone.COMMAND) {
-                        logger.fatal("Continuous effect for ability with no sourceId Ability: " + ability);
                     }
                 }
             }
@@ -1379,7 +1371,6 @@ public class ContinuousEffects implements Serializable {
                 }
             } else {
                 if (!(entry.getKey() instanceof AuraReplacementEffect)) {
-                    logger.error("Replacement effect without ability: " + entry.getKey().toString());
                 }
             }
         }
@@ -1419,7 +1410,6 @@ public class ContinuousEffects implements Serializable {
                     }
                 } else {
                     if (!(effect instanceof CommanderReplacementEffect)) {
-                        logger.warn("Ability without sourceId:" + ability.getRule());
                     }
                 }
             }
@@ -1434,27 +1424,12 @@ public class ContinuousEffects implements Serializable {
      */
     public void traceContinuousEffects(Game game) {
         game.getContinuousEffects().getLayeredEffects(game);
-        logger.info("-------------------------------------------------------------------------------------------------");
         int numberEffects = 0;
         for (ContinuousEffectsList list : allEffectsLists) {
             numberEffects += list.size();
         }
-        logger.info("Turn: " + game.getTurnNum() + " - currently existing continuous effects: " + numberEffects);
-        logger.info("layeredEffects ...................: " + layeredEffects.size());
-        logger.info("continuousRuleModifyingEffects ...: " + continuousRuleModifyingEffects.size());
-        logger.info("replacementEffects ...............: " + replacementEffects.size());
-        logger.info("preventionEffects ................: " + preventionEffects.size());
-        logger.info("requirementEffects ...............: " + requirementEffects.size());
-        logger.info("restrictionEffects ...............: " + restrictionEffects.size());
-        logger.info("restrictionUntapNotMoreThanEffects: " + restrictionUntapNotMoreThanEffects.size());
-        logger.info("costModificationEffects ..........: " + costModificationEffects.size());
-        logger.info("spliceCardEffects ................: " + spliceCardEffects.size());
-        logger.info("asThoughEffects:");
         for (Map.Entry<AsThoughEffectType, ContinuousEffectsList<AsThoughEffect>> entry : asThoughEffectsMap.entrySet()) {
-            logger.info("... " + entry.getKey().toString() + ": " + entry.getValue().size());
         }
-        logger.info("applyCounters ....................: " + (applyCounters != null ? "exists" : "null"));
-        logger.info("auraReplacementEffect ............: " + (continuousRuleModifyingEffects != null ? "exists" : "null"));
         Map<String, TraceInfo> orderedEffects = new TreeMap<>();
         traceAddContinuousEffects(orderedEffects, layeredEffects, game, "layeredEffects................");
         traceAddContinuousEffects(orderedEffects, continuousRuleModifyingEffects, game, "continuousRuleModifyingEffects");
@@ -1472,16 +1447,8 @@ public class ContinuousEffects implements Serializable {
         for (Map.Entry<String, TraceInfo> entry : orderedEffects.entrySet()) {
             if (!entry.getValue().getPlayerName().equals(playerName)) {
                 playerName = entry.getValue().getPlayerName();
-                logger.info("--- Player: " + playerName + "  --------------------------------");
             }
-            logger.info(entry.getValue().getInfo()
-                    + " " + entry.getValue().getSourceName()
-                    + " " + entry.getValue().getDuration().name()
-                    + " " + entry.getValue().getRule()
-                    + " (Order: " + entry.getValue().getOrder() + ")"
-            );
         }
-        logger.info("---- End trace Continuous effects --------------------------------------------------------------------------");
     }
 
     public static void traceAddContinuousEffects(Map orderedEffects, ContinuousEffectsList<?> cel, Game game, String listName) {

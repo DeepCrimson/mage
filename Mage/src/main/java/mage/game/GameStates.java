@@ -4,15 +4,11 @@ package mage.game;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
-import org.apache.log4j.Logger;
 
 /**
- *
  * @author BetaSteward_at_googlemail.com
  */
 public class GameStates implements Serializable {
-
-    private static final Logger logger = Logger.getLogger(GameStates.class);
     private final List<GameState> states;
 
     public GameStates() {
@@ -22,7 +18,6 @@ public class GameStates implements Serializable {
     public void save(GameState gameState) {
 //        states.add(new Copier<GameState>().copyCompressed(gameState));
         states.add(gameState.copy());
-        logger.trace("Saved game state: " + states.size());
     }
 
     public int getSize() {
@@ -34,7 +29,6 @@ public class GameStates implements Serializable {
             while (states.size() > index + 1) {
                 states.remove(states.size() - 1);
             }
-            logger.trace("Rolling back state: " + index);
 //            return new Copier<GameState>().uncompressCopy(states.get(index));
             return states.get(index);
         }

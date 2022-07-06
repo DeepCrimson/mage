@@ -542,14 +542,6 @@ public enum CardRepository {
      * @return
      */
     public List<CardInfo> findCards(CardCriteria criteria) {
-        try {
-            QueryBuilder<CardInfo, Object> queryBuilder = cardDao.queryBuilder();
-            criteria.buildQuery(queryBuilder);
-
-            return cardDao.query(queryBuilder.prepare());
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error during execution of card repository query statement", ex);
-        }
         return Collections.emptyList();
     }
 

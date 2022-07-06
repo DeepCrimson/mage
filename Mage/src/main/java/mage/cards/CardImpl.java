@@ -8,8 +8,8 @@ import mage.abilities.common.SimpleStaticAbility;
 import mage.abilities.effects.common.continuous.HasSubtypesSourceEffect;
 import mage.abilities.keyword.ChangelingAbility;
 import mage.abilities.keyword.FlashbackAbility;
+import mage.abilities.keyword.ReconfigureAbility;
 import mage.abilities.mana.ActivatedManaAbilityImpl;
-import mage.cards.repository.PluginClassloaderRegistery;
 import mage.constants.*;
 import mage.counters.Counter;
 import mage.counters.Counters;
@@ -25,18 +25,13 @@ import mage.util.CardUtil;
 import mage.util.GameLog;
 import mage.util.ManaUtil;
 import mage.watchers.Watcher;
-import org.apache.log4j.Logger;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import mage.abilities.keyword.ReconfigureAbility;
 
 public abstract class CardImpl extends MageObjectImpl implements Card {
 
     private static final long serialVersionUID = 1L;
-
-    private static final Logger logger = Logger.getLogger(CardImpl.class);
 
     protected UUID ownerId;
     protected String cardNumber;
@@ -144,20 +139,6 @@ public abstract class CardImpl extends MageObjectImpl implements Card {
         }
     }
 
-    public static Card createCard(String name, CardSetInfo setInfo) {
-        try {
-            return createCard(Class.forName(name), setInfo);
-        } catch (ClassNotFoundException ex) {
-            try {
-                return createCard(PluginClassloaderRegistery.forName(name), setInfo);
-            } catch (ClassNotFoundException ex2) {
-                // ignored
-            }
-            logger.fatal("Error loading card: " + name, ex);
-            return null;
-        }
-    }
-
     public static Card createCard(Class<?> clazz, CardSetInfo setInfo) {
         return createCard(clazz, setInfo, null);
     }
@@ -180,13 +161,6 @@ public abstract class CardImpl extends MageObjectImpl implements Card {
             if (errorList != null) {
                 errorList.add(err);
             }
-
-            if (e instanceof InvocationTargetException) {
-                logger.fatal(err, ((InvocationTargetException) e).getTargetException());
-            } else {
-                logger.fatal(err, e);
-            }
-
             return null;
         }
     }
@@ -545,8 +519,6 @@ public abstract class CardImpl extends MageObjectImpl implements Card {
                 break;
             default:
                 MageObject sourceObject = game.getObject(source);
-                logger.fatal("Invalid from zone [" + fromZone + "] for card [" + this.getIdName()
-                        + "] source [" + (sourceObject != null ? sourceObject.getName() : "null") + ']');
                 break;
         }
         if (removed) {
@@ -554,7 +526,6 @@ public abstract class CardImpl extends MageObjectImpl implements Card {
                 game.rememberLKI(lkiObject != null ? lkiObject.getId() : objectId, fromZone, lkiObject != null ? lkiObject : this);
             }
         } else {
-            logger.warn("Couldn't find card in fromZone, card=" + getIdName() + ", fromZone=" + fromZone);
             // possible reason: you to remove card from wrong zone or card already removed,
             // e.g. you added copy card to wrong graveyard (see owner) or removed card from graveyard before moveToZone call
         }

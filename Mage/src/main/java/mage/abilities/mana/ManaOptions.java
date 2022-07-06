@@ -8,7 +8,6 @@ import mage.game.events.GameEvent;
 import mage.game.events.ManaEvent;
 import mage.game.events.TappedForManaEvent;
 import mage.players.Player;
-import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -23,8 +22,6 @@ import java.util.*;
  * condition of conditional mana
  */
 public class ManaOptions extends ArrayList<Mana> {
-
-    private static final Logger logger = Logger.getLogger(ManaOptions.class);
 
     public ManaOptions() {
     }
@@ -240,11 +237,6 @@ public class ManaOptions extends ArrayList<Mana> {
                 }
             }
         }
-
-        if (this.size() > 30 || replaces > 30) {
-            logger.trace("ManaOptionsCosts " + this.size() + " Ign:" + replaces + " => " + this.toString());
-            logger.trace("Abilities: " + abilities.toString());
-        }
         forceManaDeduplication();
 
         return wasUsable;
@@ -443,7 +435,7 @@ public class ManaOptions extends ArrayList<Mana> {
                     newMana.add(manaToAdd);
                     if (!isExistingManaCombination(newMana)) {
                         this.add(newMana); // add the new combination
-                        newCombinations = true; // repeat the while as long there are new combinations and usage is repeatable                            
+                        newCombinations = true; // repeat the while as long there are new combinations and usage is repeatable
                         Mana moreValuable = Mana.getMoreValuableMana(currentManaCopy, newMana);
                         if (newMana.equals(moreValuable)) {
                             oldManaWasReplaced = true; // the new mana includes all possible mana of the old one, so no need to add it after return
@@ -473,7 +465,7 @@ public class ManaOptions extends ArrayList<Mana> {
     public static List<Mana> getPossiblePayCombinations(Mana manaCost, Mana manaAvailable) {
         List<Mana> payCombinations = new ArrayList<>();
         List<String> payCombinationsStrings = new ArrayList<>();
-        // handle fixed mana costs        
+        // handle fixed mana costs
         Mana fixedMana = manaCost.copy();
         if (manaCost.getGeneric() == 0) {
             payCombinations.add(fixedMana);
