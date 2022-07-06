@@ -6,8 +6,6 @@ import mage.constants.Zone;
 import mage.game.Game;
 import mage.game.permanent.Permanent;
 import mage.game.stack.Spell;
-import mage.game.stack.StackObject;
-import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -19,8 +17,6 @@ import java.util.UUID;
  * @author LevelX2
  */
 public class MageObjectReference implements Comparable<MageObjectReference>, Serializable {
-
-    private static final Logger logger = Logger.getLogger(MageObjectReference.class);
 
     private final UUID sourceId;
     private final int zoneChangeCounter;
@@ -84,17 +80,11 @@ public class MageObjectReference implements Comparable<MageObjectReference>, Ser
             if (game.getPlayerList().contains(sourceId)) {
                 this.zoneChangeCounter = 0;
             } else {
-                logger.error("The provided sourceId is not connected to an object in the game id: " + sourceId);
-                for (StackObject stackObject : game.getStack()) {
-                    logger.error("StackObject: " + stackObject.getId() + " sourceId " + stackObject.getSourceId() + " name " + stackObject.getName());
-                }
                 mageObject = game.getLastKnownInformation(sourceId, Zone.STACK);
                 if (mageObject != null) {
                     this.zoneChangeCounter = mageObject.getZoneChangeCounter(game);
-                    logger.error("SourceId found in LKI");
                 } else {
                     this.zoneChangeCounter = 0;
-                    logger.error("SourceId NOT found in LKI");
                 }
             }
         }

@@ -37,7 +37,6 @@ import mage.util.CardUtil;
 import mage.util.GameLog;
 import mage.util.ThreadLocalStringBuilder;
 import mage.watchers.Watcher;
-import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -48,8 +47,6 @@ import java.util.UUID;
  * @author BetaSteward_at_googlemail.com
  */
 public abstract class AbilityImpl implements Ability {
-
-    private static final Logger logger = Logger.getLogger(AbilityImpl.class);
     private static final ThreadLocalStringBuilder threadLocalBuilder = new ThreadLocalStringBuilder(100);
     private static final List<Ability> emptyAbilities = new ArrayList<>();
 
@@ -200,19 +197,6 @@ public abstract class AbilityImpl implements Ability {
             if (effect instanceof OneShotEffect) {
                 boolean effectResult = effect.apply(game, this);
                 result &= effectResult;
-                if (logger.isDebugEnabled()) {
-                    if (this.getAbilityType() != AbilityType.MANA) {
-                        if (!effectResult) {
-                            if (this.getSourceId() != null) {
-                                MageObject mageObject = game.getObject(this.getSourceId());
-                                if (mageObject != null) {
-                                    logger.debug("AbilityImpl.resolve: object: " + mageObject.getName());
-                                }
-                            }
-                            logger.debug("AbilityImpl.resolve: effect returned false -" + effect.getText(this.getModes().getMode()));
-                        }
-                    }
-                }
             } else {
                 game.addEffect((ContinuousEffect) effect, this);
             }
@@ -378,7 +362,6 @@ public abstract class AbilityImpl implements Ability {
 
         // this is a hack to prevent mana abilities with mana costs from causing endless loops - pay other costs first
         if (this instanceof ActivatedManaAbilityImpl && !costs.pay(this, game, this, controllerId, noMana, null)) {
-            logger.debug("activate mana ability failed - non mana costs");
             return false;
         }
 
@@ -404,7 +387,6 @@ public abstract class AbilityImpl implements Ability {
 
         //20100716 - 601.2g
         if (!costs.pay(this, game, this, activatorId, noMana, null)) {
-            logger.debug("activate failed - non mana costs");
             return false;
         }
         // inform about x costs now, so canceled announcements are not shown in the log
@@ -585,9 +567,6 @@ public abstract class AbilityImpl implements Ability {
             if (cost instanceof VariableManaCost) {
                 if (variableManaCost == null) {
                     variableManaCost = (VariableManaCost) cost;
-                } else {
-                    // only one VariableManCost per spell (or is it possible to have more?)
-                    logger.error("Variable mana cost allowes only in one instance per ability: " + this);
                 }
             }
         }
@@ -1116,9 +1095,6 @@ public abstract class AbilityImpl implements Ability {
             return "";
         }
         MageObject object = game.getObject(this.sourceId);
-        if (object == null) { // e.g. sacrificed token
-            logger.warn("Could get no object: " + this);
-        }
         return new StringBuilder(" activates: ")
                 .append(object != null ? this.formatRule(getModes().getText(), object.getLogName()) : getModes().getText())
                 .append(" from ")

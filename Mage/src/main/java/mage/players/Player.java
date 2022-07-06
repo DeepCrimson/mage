@@ -24,14 +24,15 @@ import mage.designations.DesignationType;
 import mage.filter.FilterCard;
 import mage.filter.FilterMana;
 import mage.filter.FilterPermanent;
-import mage.game.*;
+import mage.game.Game;
+import mage.game.GameOptions;
+import mage.game.GameState;
+import mage.game.Graveyard;
 import mage.game.combat.CombatGroup;
-import mage.game.draft.Draft;
 import mage.game.events.GameEvent;
 import mage.game.match.Match;
 import mage.game.match.MatchPlayer;
 import mage.game.permanent.Permanent;
-import mage.game.tournament.Tournament;
 import mage.players.net.UserData;
 import mage.target.Target;
 import mage.target.TargetAmount;
@@ -733,10 +734,6 @@ public interface Player extends MageItem, Copyable<Player> {
 
     void sideboard(Match match, Deck deck);
 
-    void construct(Tournament tournament, Deck deck);
-
-    void pickCard(List<Card> cards, Deck deck, Draft draft);
-
     void declareAttacker(UUID attackerId, UUID defenderId, Game game, boolean allowUndo);
 
     void declareBlocker(UUID defenderId, UUID blockerId, UUID attackerId, Game game);
@@ -818,15 +815,6 @@ public interface Player extends MageItem, Copyable<Player> {
     void setReachedNextTurnAfterLeaving(boolean reachedNextTurnAfterLeaving);
 
     boolean hasReachedNextTurnAfterLeaving();
-
-    /**
-     * Checks if a AI player is able to join a table i.e. Draft - bot can not
-     * enter a table with constructed format
-     *
-     * @param table
-     * @return
-     */
-    boolean canJoinTable(Table table);
 
     /**
      * Set the commanderId of the player

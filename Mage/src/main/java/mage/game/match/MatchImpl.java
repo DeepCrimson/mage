@@ -8,12 +8,9 @@ import mage.game.events.Listener;
 import mage.game.events.TableEvent;
 import mage.game.events.TableEvent.EventType;
 import mage.game.events.TableEventSource;
-import mage.game.result.ResultProtos.MatchProto;
-import mage.game.result.ResultProtos.MatchQuitStatus;
 import mage.players.Player;
 import mage.util.DateFormat;
 import mage.util.RandomUtil;
-import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -21,8 +18,6 @@ import java.util.*;
  * @author BetaSteward_at_googlemail.com
  */
 public abstract class MatchImpl implements Match {
-
-    private static final Logger logger = Logger.getLogger(MatchImpl.class);
 
     protected UUID id = UUID.randomUUID();
     protected List<MatchPlayer> players = new ArrayList<>();
@@ -117,7 +112,6 @@ public abstract class MatchImpl implements Match {
         if (getGame() != null && getGame().hasEnded()) {
             for (MatchPlayer matchPlayer : players) {
                 if (matchPlayer.getPlayer().hasQuit() && !matchPlayer.hasQuit()) {
-                    logger.warn("MatchPlayer was not set to quit matchId " + this.getId() + " - " + matchPlayer.getName());
                     matchPlayer.setQuit(true);
                 }
             }
@@ -207,9 +201,6 @@ public abstract class MatchImpl implements Match {
                     }
                 }
             } else {
-                if (matchPlayer.getDeck() == null) {
-                    logger.error("Match: " + this.getId() + " " + matchPlayer.getName() + " has no deck.");
-                }
             }
         }
         game.setPriorityTime(options.getPriorityTime());
@@ -319,8 +310,6 @@ public abstract class MatchImpl implements Match {
                 if (player.getDeck() != null) {
                     player.setSideboarding();
                     player.getPlayer().sideboard(this, player.getDeck());
-                } else {
-                    logger.error("Player " + player.getName() + " has no deck: " + player.getPlayer().getId());
                 }
             }
         }
@@ -483,29 +472,4 @@ public abstract class MatchImpl implements Match {
         }
         this.getGames().clear();
     }
-
-    @Override
-    public MatchProto toProto() {
-        MatchProto.Builder builder = MatchProto.newBuilder()
-                .setName(this.getName())
-                .setGameType(this.getOptions().getGameType())
-                .setDeckType(this.getOptions().getDeckType())
-                .setGames(this.getNumGames())
-                .setDraws(this.getDraws())
-                .setMatchOptions(this.getOptions().toProto())
-                .setEndTimeMs((this.getEndTime() != null ? this.getEndTime() : new Date()).getTime());
-        for (MatchPlayer matchPlayer : this.getPlayers()) {
-            MatchQuitStatus status = !matchPlayer.hasQuit() ? MatchQuitStatus.NO_MATCH_QUIT
-                    : matchPlayer.getPlayer().hasTimerTimeout() ? MatchQuitStatus.TIMER_TIMEOUT
-                    : matchPlayer.getPlayer().hasIdleTimeout() ? MatchQuitStatus.IDLE_TIMEOUT
-                    : MatchQuitStatus.QUIT;
-            builder.addPlayersBuilder()
-                    .setName(matchPlayer.getName())
-                    .setHuman(matchPlayer.getPlayer().isHuman())
-                    .setQuit(status)
-                    .setWins(matchPlayer.getWins());
-        }
-        return builder.build();
-    }
-
 }

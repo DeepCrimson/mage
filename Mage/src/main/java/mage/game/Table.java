@@ -1,18 +1,20 @@
 
 package mage.game;
 
-import java.io.Serializable;
-import java.util.*;
 import mage.cards.decks.DeckValidator;
 import mage.constants.TableState;
 import mage.game.events.Listener;
 import mage.game.events.TableEvent;
 import mage.game.events.TableEventSource;
 import mage.game.match.Match;
-import mage.game.result.ResultProtos.TableProto;
-import mage.game.tournament.Tournament;
 import mage.players.Player;
 import mage.players.PlayerType;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * @author BetaSteward_at_googlemail.com
@@ -32,7 +34,6 @@ public class Table implements Serializable {
     private DeckValidator validator;
     private TableState state;
     private Match match;
-    private Tournament tournament;
     private TableRecorder recorder;
     private Set<String> bannedUsernames;
     private boolean isPlaneChase;
@@ -44,35 +45,6 @@ public class Table implements Serializable {
     }
 
     protected TableEventSource tableEventSource = new TableEventSource();
-
-    public Table(UUID roomId, String gameType, String name, String controllerName, DeckValidator validator, List<PlayerType> playerTypes, TableRecorder recorder, Tournament tournament, Set<String> bannedUsernames, boolean isPlaneChase) {
-        this(roomId, gameType, name, controllerName, validator, playerTypes, recorder, bannedUsernames, isPlaneChase);
-        this.tournament = tournament;
-        this.isTournament = true;
-        setState(TableState.WAITING);
-    }
-
-    public Table(UUID roomId, String gameType, String name, String controllerName, DeckValidator validator, List<PlayerType> playerTypes, TableRecorder recorder, Match match, Set<String> bannedUsernames, boolean isPlaneChase) {
-        this(roomId, gameType, name, controllerName, validator, playerTypes, recorder, bannedUsernames, isPlaneChase);
-        this.match = match;
-        this.isTournament = false;
-        setState(TableState.WAITING);
-    }
-
-    protected Table(UUID roomId, String gameType, String name, String controllerName, DeckValidator validator, List<PlayerType> playerTypes, TableRecorder recorder, Set<String> bannedUsernames, boolean isPlaneChase) {
-        tableId = UUID.randomUUID();
-        this.roomId = roomId;
-        this.numSeats = playerTypes.size();
-        this.gameType = gameType;
-        this.name = name;
-        this.controllerName = controllerName;
-        this.createTime = new Date();
-        createSeats(playerTypes);
-        this.validator = validator;
-        this.recorder = recorder;
-        this.bannedUsernames = new HashSet<>(bannedUsernames);
-        this.isPlaneChase = isPlaneChase;
-    }
 
     private void createSeats(List<PlayerType> playerTypes) {
         int i = 0;
@@ -97,21 +69,14 @@ public class Table implements Serializable {
 
     public void initTournament() {
         setState(TableState.DUELING);
-        tournament.setStepStartTime(new Date());
     }
 
     public void endTournament() {
         setState(TableState.FINISHED);
     }
 
-    public void initDraft() {
-        setState(TableState.DRAFTING);
-        tournament.setStepStartTime(new Date());
-    }
-
     public void construct() {
         setState(TableState.CONSTRUCTING);
-        tournament.setStepStartTime(new Date());
     }
 
     /**
@@ -214,9 +179,6 @@ public class Table implements Serializable {
 
     final public void setState(TableState state) {
         this.state = state;
-        if (isTournament()) {
-            getTournament().setTournamentState(state.toString());
-        }
         if (state == TableState.FINISHED) {
             this.recorder.record(this);
         }
@@ -246,14 +208,6 @@ public class Table implements Serializable {
         return match;
     }
 
-    public Tournament getTournament() {
-        return tournament;
-    }
-
-    public void setTournament(Tournament tournament) {
-        this.tournament = tournament;
-    }
-
     public String getControllerName() {
         return controllerName;
     }
@@ -267,39 +221,14 @@ public class Table implements Serializable {
     }
 
     public Date getStartTime() {
-        if (isTournament) {
-            return tournament.getStartTime();
-        } else {
-            return match.getStartTime();
-        }
+        return match.getStartTime();
     }
 
     public Date getEndTime() {
-        if (isTournament) {
-            return tournament.getEndTime();
-        } else {
-            return match.getEndTime();
-        }
+        return match.getEndTime();
     }
 
     public boolean userIsBanned(String username) {
         return bannedUsernames.contains(username);
-    }
-
-    public TableProto toProto() {
-        TableProto.Builder builder = TableProto.newBuilder();
-        if (this.isTournament()) {
-            builder.getTourneyBuilder().mergeFrom(this.getTournament().toProto());
-        } else {
-            builder.getMatchBuilder().mergeFrom(this.getMatch().toProto());
-        }
-        return builder.setGameType(this.getGameType())
-                .setName(this.getName())
-                .setGameType(this.getGameType())
-                .setDeckType(this.getDeckType())
-                .setControllerName(this.getControllerName())
-                .setStartTimeMs(this.getStartTime() != null ? this.getStartTime().getTime() : 0L)
-                .setEndTimeMs(this.getEndTime() != null ? this.getEndTime().getTime() : 0L)
-                .build();
     }
 }

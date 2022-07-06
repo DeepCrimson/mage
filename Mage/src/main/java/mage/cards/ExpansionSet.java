@@ -11,7 +11,6 @@ import mage.constants.SetType;
 import mage.filter.FilterMana;
 import mage.util.CardUtil;
 import mage.util.RandomUtil;
-import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.*;
@@ -22,7 +21,6 @@ import java.util.stream.Collectors;
  */
 public abstract class ExpansionSet implements Serializable {
 
-    private static final Logger logger = Logger.getLogger(ExpansionSet.class);
     public static final CardGraphicInfo NON_FULL_USE_VARIOUS = new CardGraphicInfo(null, true);
     public static final CardGraphicInfo FULL_ART_BFZ_VARIOUS = new CardGraphicInfo(FrameStyle.BFZ_FULL_ART_BASIC, true);
     public static final CardGraphicInfo FULL_ART_ZEN_VARIOUS = new CardGraphicInfo(FrameStyle.ZEN_FULL_ART_BASIC, true);
@@ -252,7 +250,6 @@ public abstract class ExpansionSet implements Serializable {
         }
 
         // return random booster if can't do valid
-        logger.error(String.format("Can't generate valid booster for set [%s - %s]", this.getCode(), this.getName()));
         return tryBooster();
     }
 
@@ -280,10 +277,10 @@ public abstract class ExpansionSet implements Serializable {
         if (!hasBasicLands && parentSet != null) {
             String parentCode = parentSet.code;
             CardRepository
-                .instance
-                .findCards(new CardCriteria().setCodes(parentCode).rarities(Rarity.LAND))
-                .stream()
-                .forEach(cardInfo -> inBoosterMap.put(parentCode + "_" + cardInfo.getCardNumber(), cardInfo));
+                    .instance
+                    .findCards(new CardCriteria().setCodes(parentCode).rarities(Rarity.LAND))
+                    .stream()
+                    .forEach(cardInfo -> inBoosterMap.put(parentCode + "_" + cardInfo.getCardNumber(), cardInfo));
         }
     }
 
@@ -524,7 +521,7 @@ public abstract class ExpansionSet implements Serializable {
 
         cardInfos.removeIf(next -> (
                 next.getCardNumber().contains("*")
-                || next.getCardNumber().contains("+")));
+                        || next.getCardNumber().contains("+")));
 
         // special slot cards must not also appear in regular slots of their rarity
         // special land slot cards must not appear in regular common slots either
@@ -540,11 +537,11 @@ public abstract class ExpansionSet implements Serializable {
      * "Special cards" are cards that have common/uncommon/rare/mythic rarities
      * but can only appear in a specific slot in boosters. Examples are DFCs in
      * Innistrad sets and common nonbasic lands in many post-2018 sets.
-     *
+     * <p>
      * Note that Rarity.SPECIAL and Rarity.BONUS cards are not normally treated
      * as "special cards" because by default boosters don't even have slots for
      * those rarities.
-     *
+     * <p>
      * Also note that getCardsByRarity calls getSpecialCardsByRarity to exclude
      * special cards from non-special booster slots, so sets that override this
      * method must not call getCardsByRarity in it or infinite recursion will occur.
@@ -572,7 +569,7 @@ public abstract class ExpansionSet implements Serializable {
 
         cardInfos.removeIf(next -> (
                 next.getCardNumber().contains("*")
-                || next.getCardNumber().contains("+")));
+                        || next.getCardNumber().contains("+")));
 
         return cardInfos;
     }

@@ -9,7 +9,6 @@ import mage.game.events.GameEvent;
 import mage.game.events.NumberOfTriggersEvent;
 import mage.game.permanent.Permanent;
 import mage.game.stack.Spell;
-import org.apache.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,8 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * https://github.com/magefree/mage/issues/473
  */
 public class TriggeredAbilities extends ConcurrentHashMap<String, TriggeredAbility> {
-
-    private static final Logger logger = Logger.getLogger(TriggeredAbilities.class);
 
     private final Map<String, List<UUID>> sources = new HashMap<>();
 

@@ -1,24 +1,21 @@
 
 package mage.game.stack;
 
-import java.util.ArrayDeque;
-import java.util.Date;
-import java.util.UUID;
 import mage.MageObject;
 import mage.abilities.Ability;
 import mage.constants.Zone;
 import mage.constants.ZoneDetail;
 import mage.game.Game;
 import mage.game.events.GameEvent;
-import org.apache.log4j.Logger;
+
+import java.util.ArrayDeque;
+import java.util.Date;
+import java.util.UUID;
 
 /**
- *
  * @author BetaSteward_at_googlemail.com
  */
 public class SpellStack extends ArrayDeque<StackObject> {
-
-    private static final Logger logger = Logger.getLogger(SpellStack.class);
 
     protected Date dateLastAdded;
 

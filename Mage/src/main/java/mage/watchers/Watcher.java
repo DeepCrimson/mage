@@ -6,7 +6,6 @@ import mage.game.Game;
 import mage.game.events.GameEvent;
 import mage.players.PlayerList;
 import mage.util.Copyable;
-import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.lang.reflect.*;
@@ -18,8 +17,6 @@ import java.util.*;
  * @author BetaSteward_at_googlemail.com
  */
 public abstract class Watcher implements Serializable {
-
-    private static final Logger logger = Logger.getLogger(Watcher.class);
 
     protected UUID controllerId;
     protected UUID sourceId;
@@ -85,7 +82,6 @@ public abstract class Watcher implements Serializable {
             //use getDeclaredConstructors to allow for package-private constructors (i.e. omit public)
             List<?> constructors = Arrays.asList(this.getClass().getDeclaredConstructors());
             if (constructors.size() > 1) {
-                logger.error(getClass().getSimpleName() + " has multiple constructors");
                 return null;
             }
 
@@ -143,7 +139,7 @@ public abstract class Watcher implements Serializable {
                                 Cards list = e.getValue().copy();
                                 target.put(e.getKey(), list);
                             }
-                        } else if (valueType instanceof Class &&  Arrays.stream(((Class) valueType).getInterfaces()).anyMatch(c -> c.equals(Copyable.class))) {
+                        } else if (valueType instanceof Class && Arrays.stream(((Class) valueType).getInterfaces()).anyMatch(c -> c.equals(Copyable.class))) {
                             Map<Object, Copyable> source = (Map<Object, Copyable>) field.get(this);
                             Map<Object, Copyable> target = (Map<Object, Copyable>) field.get(watcher);
                             target.clear();
@@ -184,7 +180,6 @@ public abstract class Watcher implements Serializable {
             }
             return watcher;
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            logger.error("Can't copy watcher: " + e.getMessage(), e);
         }
         return null;
     }

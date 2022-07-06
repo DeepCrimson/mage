@@ -5,11 +5,9 @@ import mage.constants.ManaType;
 import mage.filter.FilterMana;
 import mage.util.CardUtil;
 import mage.util.Copyable;
-import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
 
@@ -19,8 +17,6 @@ import java.util.Objects;
  * @author BetaSteward_at_googlemail.com
  */
 public class Mana implements Comparable<Mana>, Serializable, Copyable<Mana> {
-
-    private static final transient Logger logger = Logger.getLogger(Mana.class);
 
     protected int white;
     protected int blue;
@@ -167,8 +163,8 @@ public class Mana implements Comparable<Mana>, Serializable, Copyable<Mana> {
     /**
      * Creates a {@link Mana} object of #num mana of the passed {@link ManaType}.
      *
-     * @param manaType  The type of mana to set.
-     * @param num       The number of mana available of the passed ManaType.
+     * @param manaType The type of mana to set.
+     * @param num      The number of mana available of the passed ManaType.
      **/
     public Mana(final ManaType manaType, int num) {
         this();
@@ -674,7 +670,7 @@ public class Mana implements Comparable<Mana>, Serializable, Copyable<Mana> {
      * Returns if the cost (this) can be paid by the mana provided by the passed in {@link Mana} object.
      *
      * @param avail The mana to compare too.
-     * @return      boolean indicating if there is enough available mana to pay.
+     * @return boolean indicating if there is enough available mana to pay.
      */
     public boolean enough(final Mana avail) {
         Mana compare = avail.copy();
@@ -746,11 +742,11 @@ public class Mana implements Comparable<Mana>, Serializable, Copyable<Mana> {
     /**
      * Returns the total mana needed to meet the cost of this given the available mana passed in
      * as a {@link Mana} object.
-     *
+     * <p>
      * Used by the AI to calculate what mana it needs to obtain for a spell to become playable.
      *
      * @param avail the mana available to pay the cost
-     * @return      the total mana needed to pay this given the available mana passed in as a {@link Mana} object.
+     * @return the total mana needed to pay this given the available mana passed in as a {@link Mana} object.
      */
     public Mana needed(final Mana avail) {
         Mana compare = avail.copy();
@@ -1209,15 +1205,15 @@ public class Mana implements Comparable<Mana>, Serializable, Copyable<Mana> {
     /**
      * Returns the mana that is more colored or has a greater amount but does
      * not contain one less mana in any color but generic.
-     *
+     * <p>
      * Examples:
-     *      {1}{W}{R} and {G}{W}{R} -> {G}{W}{R}
-     *      {G}{W}{R} and {G}{W}{R} -> {G}{W}{R}
-     *      {G}{W}{B} and {G}{W}{R} -> null
+     * {1}{W}{R} and {G}{W}{R} -> {G}{W}{R}
+     * {G}{W}{R} and {G}{W}{R} -> {G}{W}{R}
+     * {G}{W}{B} and {G}{W}{R} -> null
      *
-     * @param mana1     The 1st mana to compare.
-     * @param mana2     The 2nd mana to compare.
-     * @return          The greater of the two manas, or null if they're the same
+     * @param mana1 The 1st mana to compare.
+     * @param mana2 The 2nd mana to compare.
+     * @return The greater of the two manas, or null if they're the same
      */
     public static Mana getMoreValuableMana(final Mana mana1, final Mana mana2) {
         String conditionString1 = "";
@@ -1340,7 +1336,6 @@ public class Mana implements Comparable<Mana>, Serializable, Copyable<Mana> {
      */
     private static int notNegative(int value, final String name) {
         if (value < 0) {
-            logger.info(name + " can not be less than 0. Passed in: " + value + " Defaulting to 0.");
             value = 0;
         }
         return value;

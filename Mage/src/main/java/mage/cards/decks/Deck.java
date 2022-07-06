@@ -6,7 +6,6 @@ import mage.cards.repository.CardRepository;
 import mage.game.GameException;
 import mage.util.Copyable;
 import mage.util.DeckUtil;
-import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.*;
@@ -64,7 +63,7 @@ public class Deck implements Serializable, Copyable<Deck> {
         }
         Collections.sort(deckCardNames);
         Collections.sort(sbCardNames);
-        String deckString = deckCardNames.toString() + sbCardNames.toString();
+        String deckString = deckCardNames.toString() + sbCardNames;
         currentDeck.setDeckHashCode(DeckUtil.fixedHash(deckString));
         return currentDeck;
     }
@@ -119,7 +118,7 @@ public class Deck implements Serializable, Copyable<Deck> {
         }
         Collections.sort(deckCardNames);
         Collections.sort(sbCardNames);
-        String deckString = deckCardNames.toString() + sbCardNames.toString();
+        String deckString = deckCardNames.toString() + sbCardNames;
         deck.setDeckHashCode(DeckUtil.fixedHash(deckString));
         if (sbCardNames.isEmpty()) {
             deck.setDeckCompleteHashCode(deck.getDeckHashCode());
@@ -140,8 +139,6 @@ public class Deck implements Serializable, Copyable<Deck> {
             // DB seems to have a problem - try to restart the DB
             CardRepository.instance.closeDB();
             CardRepository.instance.openDB();
-            cardInfo = CardRepository.instance.findCard("Silvercoat Lion");
-            Logger.getLogger(Deck.class).error("Tried to restart the DB: " + (cardInfo == null ? "not successful" : "successful"));
         }
         return new GameException("Card not found - " + deckCardInfo.getCardName() + " - " + deckCardInfo.getSetCode() + "/" + deckCardInfo.getCardNum() + " for deck - " + deckName + '\n'
                 + "Possible reason is, that you use cards in your deck, that are only supported in newer versions of the server.\n"

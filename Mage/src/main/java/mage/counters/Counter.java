@@ -1,15 +1,11 @@
-
 package mage.counters;
 
 import java.io.Serializable;
-import org.apache.log4j.Logger;
 
 /**
  * @author BetaSteward_at_googlemail.com
  */
 public class Counter implements Serializable {
-
-    private static final Logger logger = Logger.getLogger(Counter.class);
 
     protected final String name;
     protected int count;
@@ -29,7 +25,7 @@ public class Counter implements Serializable {
      * Creates a {@link Counter} with the provided {@code name} and
      * {@code count}
      *
-     * @param name the name of this counter.
+     * @param name  the name of this counter.
      * @param count the value of this counter.
      */
     public Counter(final String name, final int count) {
@@ -64,9 +60,6 @@ public class Counter implements Serializable {
     public void decrease() {
         if (count > 0) {
             count--;
-        } else {
-            logger.warn("An attempt was made to set the counter '" + name
-                    + "' to less than 0. Setting to 0.");
         }
     }
 
@@ -81,8 +74,6 @@ public class Counter implements Serializable {
         if (count >= amount) {
             count -= amount;
         } else {
-            logger.warn("An attempt was made to set the counter '" + name
-                    + "' to less than 0. Setting to 0.");
             count = 0;
         }
     }

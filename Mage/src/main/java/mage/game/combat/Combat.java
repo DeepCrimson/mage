@@ -31,7 +31,6 @@ import mage.target.common.TargetDefender;
 import mage.util.CardUtil;
 import mage.util.Copyable;
 import mage.util.trace.TraceUtil;
-import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.*;
@@ -41,8 +40,6 @@ import java.util.stream.Collectors;
  * @author BetaSteward_at_googlemail.com
  */
 public class Combat implements Serializable, Copyable<Combat> {
-
-    private static final Logger logger = Logger.getLogger(Combat.class);
 
     private static FilterCreatureForCombatBlock filterBlockers = new FilterCreatureForCombatBlock();
     // There are effects that let creatures assigns combat damage equal to its toughness rather than its power
@@ -357,8 +354,8 @@ public class Combat implements Serializable, Copyable<Combat> {
             if (game.replaceEvent(GameEvent.getEvent(GameEvent.EventType.DECLARING_ATTACKERS, attackingPlayerId, attackingPlayerId))
                     || (!canBand && !canBandWithOther)
                     || !player.chooseUse(Outcome.Benefit,
-                            (isBanded ? "Band " + attacker.getLogName()
-                                    + " with another " : "Form a band with " + attacker.getLogName() + " and an ")
+                    (isBanded ? "Band " + attacker.getLogName()
+                            + " with another " : "Form a band with " + attacker.getLogName() + " and an ")
                             + "attacking creature?", null, game)) {
                 break;
             }
@@ -589,7 +586,7 @@ public class Combat implements Serializable, Copyable<Combat> {
      * Handle the blocker selection process
      *
      * @param blockController player that controls how to block, if null the
-     * defender is the controller
+     *                        defender is the controller
      * @param game
      */
     public void selectBlockers(Player blockController, Ability source, Game game) {
@@ -1405,7 +1402,7 @@ public class Combat implements Serializable, Copyable<Combat> {
      * @param playerId
      * @param game
      * @param solveBanding check whether also add creatures banded with
-     * attackerId
+     *                     attackerId
      */
     public void addBlockingGroup(UUID blockerId, UUID attackerId, UUID playerId, Game game, boolean solveBanding) {
         Permanent blocker = game.getPermanent(blockerId);

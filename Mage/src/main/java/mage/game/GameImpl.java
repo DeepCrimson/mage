@@ -65,7 +65,6 @@ import mage.util.RandomUtil;
 import mage.util.functions.CopyApplier;
 import mage.watchers.Watcher;
 import mage.watchers.common.*;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -86,7 +85,6 @@ public abstract class GameImpl implements Game {
 
     private static final int ROLLBACK_TURNS_MAX = 4;
     private static final String UNIT_TESTS_ERROR_TEXT = "Error in unit tests";
-    private static final Logger logger = Logger.getLogger(GameImpl.class);
 
     private transient Object customData; // temporary data, used in AI simulations
     private transient Player losingPlayer; // temporary data, used in AI simulations
@@ -663,7 +661,6 @@ public abstract class GameImpl implements Game {
                     // copied activated abilities is StackAbility (not spell) and must be ignored here
                     // if not then java.lang.ClassCastException: mage.game.stack.StackAbility cannot be cast to mage.game.stack.Spell
                     // see SyrCarahTheBoldTest as example
-                    // logger.error("getSpellOrLKIStack got non spell id - " + obj.getClass().getName() + " - " + obj.getName(), new Throwable());
                 }
             }
         }
@@ -759,7 +756,6 @@ public abstract class GameImpl implements Game {
         if (player != null) {
             if (!player.hasLeft() && player.isHuman()) {
                 if (!concedingPlayers.contains(playerId)) {
-                    logger.debug("Game over for player Id: " + playerId + " gameId " + getId());
                     concedingPlayers.add(playerId);
                     player.signalPlayerConcede();
                 }
@@ -797,15 +793,8 @@ public abstract class GameImpl implements Game {
         }
         if (remainingPlayers <= 1 || numLosers >= state.getPlayers().size() - 1) {
             end();
-            if (remainingPlayers == 0 && logger.isDebugEnabled()) {
-                logger.debug("DRAW for gameId: " + getId());
-                for (Player player : state.getPlayers().values()) {
-                    logger.debug("-- " + player.getName() + " left: " + (player.hasLeft() ? "Y" : "N") + " lost: " + (player.hasLost() ? "Y" : "N"));
-                }
-            }
             for (Player player : state.getPlayers().values()) {
                 if (!player.hasLeft() && !player.hasLost()) {
-                    logger.debug("Player " + player.getName() + " has won gameId: " + this.getId());
                     player.won(this);
                 }
             }
@@ -841,12 +830,8 @@ public abstract class GameImpl implements Game {
     public int bookmarkState() {
         if (!simulation) {
             saveState(true);
-            if (logger.isTraceEnabled()) {
-                logger.trace("Bookmarking state: " + gameStates.getSize());
-            }
-            savedStates.push(gameStates.getSize() - 1);
-            return savedStates.size();
         }
+        savedStates.push(gameStates.getSize() - 1);
         return savedStates.size();
     }
 
@@ -863,8 +848,6 @@ public abstract class GameImpl implements Game {
             if (bookmark != 0) {
                 if (!savedStates.contains(bookmark - 1)) {
                     if (!savedStates.isEmpty()) { // empty if rollback to a turn was requested before, otherwise unclear why
-                        logger.error("It was not possible to do the requested undo operation (bookmark " + (bookmark - 1) + " does not exist) context: " + context);
-                        logger.info("Saved states: " + savedStates.toString());
                     }
                 } else {
                     int stateNum = savedStates.get(bookmark - 1);
@@ -942,7 +925,6 @@ public abstract class GameImpl implements Game {
                     break;
                 }
                 if (playerByOrder == null) {
-                    logger.error("Can't find next player by order, but game stil run. Finish it.");
                     forcedToFinished = true;
                     break;
                 }
@@ -981,7 +963,6 @@ public abstract class GameImpl implements Game {
                 sb.append(']');
                 count++;
             }
-            logger.debug(sb.toString());
         }
     }
 
@@ -1195,7 +1176,6 @@ public abstract class GameImpl implements Game {
         }
         Player startingPlayer = state.getPlayer(startingPlayerId);
         if (startingPlayer == null) {
-            logger.debug("Starting player not found. playerId:" + startingPlayerId);
             return;
         }
         sendStartMessage(choosingPlayer, startingPlayer);
@@ -1323,12 +1303,10 @@ public abstract class GameImpl implements Game {
         UUID winnerIdFound = null;
         for (Player player : state.getPlayers().values()) {
             if (player.hasWon()) {
-                logger.debug(player.getName() + " has won gameId: " + getId());
                 winnerIdFound = player.getId();
                 break;
             }
             if (!player.hasLost() && !player.hasLeft()) {
-                logger.debug(player.getName() + " has not lost so they won gameId: " + this.getId());
                 player.won(this);
                 winnerIdFound = player.getId();
                 break;
@@ -1360,7 +1338,6 @@ public abstract class GameImpl implements Game {
                 return player.getId();
             }
         }
-        logger.debug("Game was not possible to pick a choosing player. GameId:" + getId());
         return null;
     }
 
@@ -1377,7 +1354,6 @@ public abstract class GameImpl implements Game {
     @Override
     public void end() {
         if (!state.isGameOver()) {
-            logger.debug("END of gameId: " + this.getId());
             endTime = new Date();
             state.endGame();
             for (Player player : state.getPlayers().values()) {
@@ -1412,7 +1388,6 @@ public abstract class GameImpl implements Game {
         if (player != null) {
             player.timerTimeout(this);
         } else {
-            logger.error(new StringBuilder("timerTimeout - player not found - playerId: ").append(playerId));
         }
     }
 
@@ -1422,7 +1397,6 @@ public abstract class GameImpl implements Game {
         if (player != null) {
             player.idleTimeout(this);
         } else {
-            logger.error(new StringBuilder("idleTimeout - player not found - playerId: ").append(playerId));
         }
     }
 
@@ -1430,7 +1404,6 @@ public abstract class GameImpl implements Game {
     public synchronized void concede(UUID playerId) {
         Player player = state.getPlayer(playerId);
         if (player != null && !player.hasLost()) {
-            logger.debug("Player " + player.getName() + " concedes game " + this.getId());
             fireInformEvent(player.getLogName() + " has conceded.");
             player.concede(this);
         }
@@ -1554,16 +1527,13 @@ public abstract class GameImpl implements Game {
                             }
                         }
                     } catch (Exception ex) {
-                        logger.fatal("Game exception gameId: " + getId(), ex);
                         if ((ex instanceof NullPointerException)
                                 && errorContinueCounter == 0 && ex.getStackTrace() != null) {
-                            logger.fatal(ex.getStackTrace());
                         }
                         this.fireErrorEvent("Game exception occurred: ", ex);
 
                         // stack info
                         String info = this.getStack().stream().map(MageObject::toString).collect(Collectors.joining("\n"));
-                        logger.info(String.format("\nStack before error %d: \n%s\n", this.getStack().size(), info));
 
                         // rollback game to prev state
                         GameState restoredState = restoreState(rollbackBookmark, "Game exception: " + ex.getMessage());
@@ -1577,7 +1547,6 @@ public abstract class GameImpl implements Game {
                         if (restoredState != null) {
                             this.informPlayers(String.format("Auto-restored to %s due game error: %s", restoredState, ex.getMessage()));
                         } else {
-                            logger.error("Can't auto-restore to prev state.");
                         }
 
                         Player activePlayer = this.getPlayer(getActivePlayerId());
@@ -1594,7 +1563,6 @@ public abstract class GameImpl implements Game {
                 }
             }
         } catch (Exception ex) {
-            logger.fatal("Game exception " + ex.getMessage(), ex);
             this.fireErrorEvent("Game exception occurred: ", ex);
             this.end();
 
@@ -1930,7 +1898,6 @@ public abstract class GameImpl implements Game {
                     sourceName = mageObject.getName();
                 }
             }
-            logger.fatal("Added triggered ability without controller: " + sourceName + " rule: " + ability.getRule());
             return;
         }
         if (ability instanceof TriggeredManaAbility || ability instanceof DelayedTriggeredManaAbility) {
@@ -2357,7 +2324,6 @@ public abstract class GameImpl implements Game {
                     }
                     if (spellAbility.getTargets().isEmpty()) {
                         Permanent enchanted = this.getPermanent(perm.getAttachedTo());
-                        logger.error("Aura without target: " + perm.getName() + " attached to " + (enchanted == null ? " null" : enchanted.getName()));
                     } else {
                         Target target = spellAbility.getTargets().get(0);
                         if (target instanceof TargetPermanent) {
@@ -2802,7 +2768,6 @@ public abstract class GameImpl implements Game {
 
     @Override
     public void debugMessage(String message) {
-        logger.warn(message);
     }
 
     @Override
@@ -2826,7 +2791,6 @@ public abstract class GameImpl implements Game {
         if (simulation) {
             return;
         }
-        logger.trace("fireUpdatePlayersEvent");
         tableEventSource.fireTableEvent(EventType.UPDATE, null, this);
         getState().clearLookedAt();
         getState().clearRevealed();
@@ -2837,7 +2801,6 @@ public abstract class GameImpl implements Game {
         if (simulation) {
             return;
         }
-        logger.trace("fireGameEndIfo");
         tableEventSource.fireTableEvent(EventType.END_GAME_INFO, null, this);
     }
 
@@ -2927,10 +2890,8 @@ public abstract class GameImpl implements Game {
     protected void leave(UUID playerId) { // needs to be executed from the game thread, not from the concede thread of conceding player!
         Player player = getPlayer(playerId);
         if (player == null || player.hasLeft()) {
-            logger.debug("Player already left " + (player != null ? player.getName() : playerId));
             return;
         }
-        logger.debug("Start leave game: " + player.getName());
         player.leave();
         if (checkIfGameIsOver()) {
             // no need to remove objects if only one player is left so the game is over
@@ -3327,9 +3288,7 @@ public abstract class GameImpl implements Game {
                                     try {
                                         Integer amount = Integer.parseInt(s[1]);
                                         player.setLife(amount, this, null);
-                                        logger.debug("Setting player's life: ");
                                     } catch (NumberFormatException e) {
-                                        logger.fatal("error setting life", e);
                                     }
                                 }
 
@@ -3747,7 +3706,7 @@ public abstract class GameImpl implements Game {
     public boolean isGameStopped() {
         return gameStopped;
     }
-    
+
     @Override
     public boolean isTurnOrderReversed() {
         return state.getReverseTurnOrder();

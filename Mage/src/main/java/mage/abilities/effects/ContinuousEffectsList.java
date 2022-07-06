@@ -9,7 +9,6 @@ import mage.constants.Zone;
 import mage.game.Game;
 import mage.game.permanent.Permanent;
 import mage.players.Player;
-import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -18,8 +17,6 @@ import java.util.*;
  * @author BetaSteward_at_googlemail.com
  */
 public class ContinuousEffectsList<T extends ContinuousEffect> extends ArrayList<T> {
-
-    private static final Logger logger = Logger.getLogger(ContinuousEffectsList.class);
 
     // the effectAbilityMap holds for each effect all abilities that are connected (used) with this effect
     private final Map<UUID, Set<Ability>> effectAbilityMap = new HashMap<>();
@@ -109,7 +106,6 @@ public class ContinuousEffectsList<T extends ContinuousEffect> extends ArrayList
         // objects removes doing in player.leave() call... effects removes is here
         Set<Ability> set = effectAbilityMap.get(effect.getId());
         if (set == null) {
-            logger.debug("No abilities for effect found: " + effect.toString());
             return false;
         }
         Iterator<Ability> it = set.iterator();
@@ -182,7 +178,7 @@ public class ContinuousEffectsList<T extends ContinuousEffect> extends ArrayList
                         }
                         break;
                     default:
-                        throw new IllegalStateException("Effects gets unknown duration " + effect.getDuration() + ", effect: " + effect.toString());
+                        throw new IllegalStateException("Effects gets unknown duration " + effect.getDuration() + ", effect: " + effect);
                 }
             }
         }

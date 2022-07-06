@@ -33,7 +33,6 @@ import mage.util.Copyable;
 import mage.util.ThreadLocalStringBuilder;
 import mage.watchers.Watcher;
 import mage.watchers.Watchers;
-import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.*;
@@ -50,8 +49,7 @@ import static java.util.Collections.emptyList;
  * throughout its lifetime
  */
 public class GameState implements Serializable, Copyable<GameState> {
-
-    private static final Logger logger = Logger.getLogger(GameState.class);
+    
     private static final ThreadLocalStringBuilder threadLocalBuilder = new ThreadLocalStringBuilder(1024);
 
     // save copied cards between game cycles (lki workaround)
@@ -1447,21 +1445,22 @@ public class GameState implements Serializable, Copyable<GameState> {
     boolean isDaytime() {
         return isDaytime;
     }
-    
+
     @Override
     public String toString() {
         return CardUtil.getTurnInfo(this);
     }
 
-    public boolean setReverseTurnOrder(boolean reverse){
-        if(this.reverseTurnOrder&&reverse){
+    public boolean setReverseTurnOrder(boolean reverse) {
+        if (this.reverseTurnOrder && reverse) {
             this.reverseTurnOrder = false;
         } else {
             this.reverseTurnOrder = reverse;
         }
         return this.reverseTurnOrder;
     }
-    public boolean getReverseTurnOrder(){
+
+    public boolean getReverseTurnOrder() {
         return this.reverseTurnOrder;
     }
 }
