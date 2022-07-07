@@ -2,9 +2,8 @@ package mage.server;
 
 import mage.MageException;
 import mage.players.net.UserData;
-import mage.server.managers.SessionManager;
 import mage.server.managers.ManagerFactory;
-import org.apache.log4j.Logger;
+import mage.server.managers.SessionManager;
 import org.jboss.remoting.callback.InvokerCallbackHandler;
 
 import javax.annotation.Nonnull;
@@ -15,8 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author BetaSteward_at_googlemail.com
  */
 public class SessionManagerImpl implements SessionManager {
-
-    private static final Logger logger = Logger.getLogger(SessionManagerImpl.class);
 
     private final ManagerFactory managerFactory;
     private final ConcurrentHashMap<String, Session> sessions = new ConcurrentHashMap<>();
@@ -29,11 +26,9 @@ public class SessionManagerImpl implements SessionManager {
     public Optional<Session> getSession(@Nonnull String sessionId) {
         Session session = sessions.get(sessionId);
         if (session == null) {
-            logger.trace("Session with sessionId " + sessionId + " is not found");
             return Optional.empty();
         }
         if (session.getUserId() != null && !managerFactory.userManager().getUser(session.getUserId()).isPresent()) {
-            logger.error("User for session " + sessionId + " with userId " + session.getUserId() + " is missing. Session removed.");
             // can happen if user from same host signs in multiple time with multiple clients, after they disconnect with one client
             disconnect(sessionId, DisconnectReason.ConnectingOtherInstance, session); // direct disconnect
             return Optional.empty();
@@ -51,18 +46,12 @@ public class SessionManagerImpl implements SessionManager {
     public boolean registerUser(String sessionId, String userName, String password, String email) throws MageException {
         Session session = sessions.get(sessionId);
         if (session == null) {
-            logger.error(userName + " tried to register with no sessionId");
             return false;
         }
         String returnMessage = session.registerUser(userName, password, email);
         if (returnMessage != null) {
-            logger.debug(userName + " not registered: " + returnMessage);
             return false;
         }
-        logger.info(userName + " registered");
-        logger.debug("- userId:    " + session.getUserId());
-        logger.debug("- sessionId: " + sessionId);
-        logger.debug("- host:      " + session.getHost());
         return true;
     }
 
@@ -72,16 +61,10 @@ public class SessionManagerImpl implements SessionManager {
         if (session != null) {
             String returnMessage = session.connectUser(userName, password);
             if (returnMessage == null) {
-                logger.info(userName + " connected to server");
-                logger.debug("- userId:    " + session.getUserId());
-                logger.debug("- sessionId: " + sessionId);
-                logger.debug("- host:      " + session.getHost());
                 return true;
             } else {
-                logger.debug(userName + " not connected: " + returnMessage);
             }
         } else {
-            logger.error(userName + " tried to connect with no sessionId");
         }
         return false;
     }
@@ -91,7 +74,6 @@ public class SessionManagerImpl implements SessionManager {
         Session session = sessions.get(sessionId);
         if (session != null) {
             session.connectAdmin();
-            logger.info("Admin connected from " + session.getHost());
             return true;
         }
         return false;
@@ -119,7 +101,6 @@ public class SessionManagerImpl implements SessionManager {
                     // session was removed meanwhile by another thread so we can return
                     return;
                 }
-                logger.debug("DISCONNECT  " + reason.toString() + " - sessionId: " + sessionId);
                 sessions.remove(sessionId);
                 switch (reason) {
                     case AdminDisconnect:
@@ -136,7 +117,6 @@ public class SessionManagerImpl implements SessionManager {
                         managerFactory.userManager().disconnect(session.getUserId(), reason);
                         break;
                     default:
-                        logger.trace("endSession: unexpected reason  " + reason.toString() + " - sessionId: " + sessionId);
                 }
             });
         } else {
@@ -200,7 +180,6 @@ public class SessionManagerImpl implements SessionManager {
         if (session != null) {
             return managerFactory.userManager().getUser(sessions.get(sessionId).getUserId());
         }
-        logger.error(String.format("Session %s could not be found", sessionId));
         return Optional.empty();
     }
 
@@ -215,7 +194,6 @@ public class SessionManagerImpl implements SessionManager {
     public void sendErrorMessageToClient(String sessionId, String message) {
         Session session = sessions.get(sessionId);
         if (session == null) {
-            logger.error("Following error message is not delivered because session " + sessionId + " is not found: " + message);
             return;
         }
         session.sendErrorMessageToClient(message);

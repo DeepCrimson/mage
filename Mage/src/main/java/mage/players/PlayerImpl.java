@@ -62,7 +62,6 @@ import mage.target.common.TargetDiscard;
 import mage.util.CardUtil;
 import mage.util.GameLog;
 import mage.util.RandomUtil;
-import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.*;
@@ -70,8 +69,6 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 public abstract class PlayerImpl implements Player, Serializable {
-
-    private static final Logger logger = Logger.getLogger(PlayerImpl.class);
 
     /**
      * Used to cancel waiting requests send to the player
@@ -1184,7 +1181,6 @@ public abstract class PlayerImpl implements Player, Serializable {
 
         //20091005 - 601.2a
         if (ability.getSourceId() == null) {
-            logger.error("Ability without sourceId turn " + game.getTurnNum() + ". Ability: " + ability.getRule());
             return false;
         }
         Card card = game.getCard(ability.getSourceId());
@@ -1199,7 +1195,6 @@ public abstract class PlayerImpl implements Player, Serializable {
                 card.cast(game, fromZone, ability, playerId);
                 Spell spell = game.getStack().getSpell(ability.getId());
                 if (spell == null) {
-                    logger.error("Got no spell from stack. ability: " + ability.getRule());
                     return false;
                 }
                 if (card.isCopy()) {
@@ -1517,7 +1512,6 @@ public abstract class PlayerImpl implements Player, Serializable {
     @Override
     public boolean triggerAbility(TriggeredAbility triggeredAbility, Game game) {
         if (triggeredAbility == null) {
-            logger.warn("Null source in triggerAbility method");
             throw new IllegalArgumentException("source TriggeredAbility  must not be null");
         }
         //20091005 - 603.3c, 603.3d
@@ -2403,7 +2397,6 @@ public abstract class PlayerImpl implements Player, Serializable {
     public void quit(Game game) {
         quit = true;
         this.concede(game);
-        logger.debug(getName() + " quits the match.");
         game.informPlayers(getLogName() + " quits the match.");
     }
 
@@ -2485,7 +2478,6 @@ public abstract class PlayerImpl implements Player, Serializable {
                 userData.resetRequestedHandPlayersList(game.getId()); // users can send request again
                 break;
         }
-        logger.trace("PASS Priority: " + playerAction);
     }
 
     @Override
@@ -2514,18 +2506,15 @@ public abstract class PlayerImpl implements Player, Serializable {
 
     @Override
     public void lostForced(Game game) {
-        logger.debug(this.getName() + " has lost gameId: " + game.getId());
         //20100423 - 603.9
         if (!this.wins) {
             this.loses = true;
             game.fireEvent(GameEvent.getEvent(GameEvent.EventType.LOST, null, null, playerId));
             game.informPlayers(this.getLogName() + " has lost the game.");
         } else {
-            logger.debug(this.getName() + " has already won - stop lost");
         }
         // for draw - first all players that have lost have to be set to lost
         if (!hasLeft()) {
-            logger.debug("Game over playerId: " + playerId);
             game.setConcedingPlayer(playerId);
         }
     }
@@ -2550,15 +2539,12 @@ public abstract class PlayerImpl implements Player, Serializable {
         if (!opponentInGame
                 || // if no more opponent is in game the wins event may no longer be replaced
                 !game.replaceEvent(new GameEvent(GameEvent.EventType.WINS, null, null, playerId))) {
-            logger.debug("player won -> start: " + this.getName());
             if (!this.loses) {
                 //20130501 - 800.7, 801.16
                 // all opponents in range loose the game
                 for (UUID opponentId : game.getOpponents(playerId)) {
                     Player opponent = game.getPlayer(opponentId);
                     if (opponent != null && !opponent.hasLost()) {
-                        logger.debug("player won -> calling opponent lost: "
-                                + this.getName() + "  opponent: " + opponent.getName());
                         opponent.lostForced(game);
                     }
                 }
@@ -2573,13 +2559,11 @@ public abstract class PlayerImpl implements Player, Serializable {
                     }
                 }
                 if (opponentsAlive == 0 && !hasWon()) {
-                    logger.debug("player won -> No more opponents alive game won: " + this.getName());
                     game.informPlayers(this.getLogName() + " has won the game");
                     this.wins = true;
                     game.end();
                 }
             } else {
-                logger.debug("player won -> but already lost before or other players still alive: " + this.getName());
             }
         }
     }
@@ -4457,7 +4441,6 @@ public abstract class PlayerImpl implements Player, Serializable {
         return reachedNextTurnAfterLeaving;
     }
 
-    @Override
     public boolean canJoinTable(Table table
     ) {
         return !table.userIsBanned(name);

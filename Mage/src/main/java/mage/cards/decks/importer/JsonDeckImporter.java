@@ -1,6 +1,8 @@
 package mage.cards.decks.importer;
 
-import com.google.gson.*;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
 import mage.cards.decks.DeckCardLists;
 
 import java.io.File;
@@ -14,7 +16,7 @@ public abstract class JsonDeckImporter extends DeckImporter {
     protected StringBuilder sbMessage = new StringBuilder();
 
     /**
-     * @param fileName              file to import
+     * @param fileName          file to import
      * @param errorMessages     you can setup output messages to showup to user
      * @param saveAutoFixedFile do not supported for that format
      * @return decks list
@@ -23,7 +25,6 @@ public abstract class JsonDeckImporter extends DeckImporter {
         File f = new File(fileName);
         DeckCardLists deckList = new DeckCardLists();
         if (!f.exists()) {
-            logger.warn("Deckfile " + fileName + " not found.");
             return deckList;
         }
 
@@ -38,19 +39,13 @@ public abstract class JsonDeckImporter extends DeckImporter {
                         if (errorMessages != null) {
                             // normal output for user
                             errorMessages.append(sbMessage);
-                        } else {
-                            // fatal error
-                            logger.fatal(sbMessage);
                         }
                     }
                 } catch (JsonParseException ex) {
-                    logger.fatal("Can't parse json-deck: " + fileName, ex);
                 }
             } catch (Exception ex) {
-                logger.fatal(null, ex);
             }
         } catch (Exception ex) {
-            logger.fatal(null, ex);
         }
         return deckList;
     }

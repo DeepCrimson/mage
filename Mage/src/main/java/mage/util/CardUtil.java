@@ -42,7 +42,6 @@ import mage.target.Target;
 import mage.target.TargetCard;
 import mage.target.targetpointer.FixedTarget;
 import mage.util.functions.CopyTokenFunction;
-import org.apache.log4j.Logger;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -56,8 +55,6 @@ import java.util.stream.Stream;
  * @author nantuko
  */
 public final class CardUtil {
-
-    private static final Logger logger = Logger.getLogger(CardUtil.class);
 
     public static final List<String> RULES_ERROR_INFO = ImmutableList.of("Exception occurred in rules generation");
 
@@ -1133,7 +1130,6 @@ public final class CardUtil {
             }
             return rules;
         } catch (Exception e) {
-            logger.error("Exception in rules generation for card: " + cardName, e);
         }
         return RULES_ERROR_INFO;
     }

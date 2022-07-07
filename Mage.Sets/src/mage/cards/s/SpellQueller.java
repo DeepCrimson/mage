@@ -1,8 +1,6 @@
 
 package mage.cards.s;
 
-import java.util.Set;
-import java.util.UUID;
 import mage.ApprovingObject;
 import mage.MageInt;
 import mage.MageObject;
@@ -10,7 +8,6 @@ import mage.abilities.Ability;
 import mage.abilities.common.EntersBattlefieldTriggeredAbility;
 import mage.abilities.common.LeavesBattlefieldTriggeredAbility;
 import mage.abilities.effects.OneShotEffect;
-import mage.abilities.effects.common.ReturnFromExileForSourceEffect;
 import mage.abilities.keyword.FlashAbility;
 import mage.abilities.keyword.FlyingAbility;
 import mage.cards.Card;
@@ -29,10 +26,11 @@ import mage.game.stack.Spell;
 import mage.players.Player;
 import mage.target.TargetSpell;
 import mage.util.CardUtil;
-import org.apache.log4j.Logger;
+
+import java.util.Set;
+import java.util.UUID;
 
 /**
- *
  * @author LevelX2
  */
 public final class SpellQueller extends CardImpl {
@@ -128,7 +126,6 @@ class SpellQuellerLeavesEffect extends OneShotEffect {
         if (controller != null && sourceObject != null) {
             Permanent permanentLeftBattlefield = (Permanent) getValue("permanentLeftBattlefield");
             if (permanentLeftBattlefield == null) {
-                Logger.getLogger(ReturnFromExileForSourceEffect.class).error("Permanent not found: " + sourceObject.getName());
                 return false;
             }
             ExileZone exile = game.getExile().getExileZone(CardUtil.getExileZoneId(game, source.getSourceId(), permanentLeftBattlefield.getZoneChangeCounter(game)));

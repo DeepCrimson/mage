@@ -39,7 +39,6 @@ public class O8dDeckImporter extends XmlDeckImporter {
 
             return decklist;
         } catch (Exception e) {
-            logger.error("Error loading deck", e);
             errorMessages.append("There was an error loading the deck.");
             return new DeckCardLists();
         }

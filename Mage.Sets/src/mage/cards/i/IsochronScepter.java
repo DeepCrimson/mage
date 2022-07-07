@@ -1,6 +1,5 @@
 package mage.cards.i;
 
-import java.util.UUID;
 import mage.ApprovingObject;
 import mage.abilities.Ability;
 import mage.abilities.common.EntersBattlefieldTriggeredAbility;
@@ -19,10 +18,10 @@ import mage.game.permanent.Permanent;
 import mage.players.Player;
 import mage.target.TargetCard;
 import mage.util.CardUtil;
-import org.apache.log4j.Logger;
+
+import java.util.UUID;
 
 /**
- *
  * @author LevelX2
  */
 public final class IsochronScepter extends CardImpl {
@@ -32,7 +31,7 @@ public final class IsochronScepter extends CardImpl {
 
         // Imprint - When Isochron Scepter enters the battlefield, you may exile an instant card with converted mana cost 2 or less from your hand.
         this.addAbility(new EntersBattlefieldTriggeredAbility(
-                new IsochronScepterImprintEffect(),true)
+                new IsochronScepterImprintEffect(), true)
                 .setAbilityWord(AbilityWord.IMPRINT)
         );
 
@@ -147,9 +146,6 @@ class IsochronScepterCopyEffect extends OneShotEffect {
                                     controller.cast(controller.chooseAbilityForCast(copiedCard, game, true),
                                             game, true, new ApprovingObject(source, game));
                                     game.getState().setValue("PlayFromNotOwnHandZone" + copiedCard.getId(), null);
-                                } else {
-                                    Logger.getLogger(IsochronScepterCopyEffect.class).error("Isochron Scepter: "
-                                            + "spell ability == null " + copiedCard.getName());
                                 }
                             }
                         }

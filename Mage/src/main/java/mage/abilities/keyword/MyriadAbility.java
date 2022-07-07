@@ -1,15 +1,11 @@
-
 package mage.abilities.keyword;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 import mage.abilities.Ability;
 import mage.abilities.common.AttacksTriggeredAbility;
 import mage.abilities.common.delayed.AtTheEndOfCombatDelayedTriggeredAbility;
 import mage.abilities.effects.OneShotEffect;
-import mage.abilities.effects.common.ExileTargetEffect;
 import mage.abilities.effects.common.CreateTokenCopyTargetEffect;
+import mage.abilities.effects.common.ExileTargetEffect;
 import mage.constants.Outcome;
 import mage.constants.SetTargetPointer;
 import mage.game.Game;
@@ -17,15 +13,18 @@ import mage.game.permanent.Permanent;
 import mage.players.Player;
 import mage.target.targetpointer.FixedTarget;
 import mage.target.targetpointer.FixedTargets;
-import org.apache.log4j.Logger;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class MyriadAbility extends AttacksTriggeredAbility {
 
     public MyriadAbility() {
         super(new MyriadEffect(), false,
                 "myriad <i>(Whenever this creature attacks, for each opponent other than the defending player, "
-                + "put a token that's a copy of this creature onto the battlefield tapped and attacking "
-                + "that player or a planeswalker they control. Exile those tokens at the end of combat.)</i>",
+                        + "put a token that's a copy of this creature onto the battlefield tapped and attacking "
+                        + "that player or a planeswalker they control. Exile those tokens at the end of combat.)</i>",
                 SetTargetPointer.PLAYER
         );
     }
@@ -67,7 +66,6 @@ class MyriadEffect extends OneShotEffect {
         if (controller != null && sourceObject != null) {
             UUID defendingPlayerId = game.getCombat().getDefendingPlayerId(source.getSourceId(), game);
             if (defendingPlayerId == null) {
-                Logger.getLogger(MyriadEffect.class).error("defending player == null source: " + sourceObject.getName() + " attacking: " + (sourceObject.isAttacking() ? "Y" : "N"));
                 return false;
             }
             List<Permanent> tokens = new ArrayList<>();

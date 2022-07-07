@@ -15,7 +15,6 @@ import mage.game.permanent.Permanent;
 import mage.game.stack.Spell;
 import mage.game.stack.StackObject;
 import mage.players.Player;
-import org.apache.log4j.Logger;
 
 import java.util.UUID;
 
@@ -116,7 +115,6 @@ class ComeuppanceEffect extends PreventionEffectImpl {
             } else if (damageSource instanceof Card) {
                 return !((Card) damageSource).isOwnedBy(source.getControllerId());
             }
-            Logger.getLogger(Comeuppance.class).error("Comeuppance: could not define source objects controller - " + (damageSource != null ? damageSource.getName() : "null"));
         }
         return false;
     }

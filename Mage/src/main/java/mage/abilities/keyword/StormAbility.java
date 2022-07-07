@@ -9,11 +9,9 @@ import mage.constants.Outcome;
 import mage.constants.Zone;
 import mage.game.Game;
 import mage.game.events.GameEvent;
-import mage.game.events.GameEvent.EventType;
 import mage.game.stack.Spell;
 import mage.game.stack.StackObject;
 import mage.watchers.common.CastSpellLastTurnWatcher;
-import org.apache.log4j.Logger;
 
 /**
  * @author Plopman
@@ -85,8 +83,6 @@ class StormEffect extends OneShotEffect {
                         spell.createCopyOnStack(game, source, source.getControllerId(), true, stormCount);
                     }
                 }
-            } else {
-                Logger.getLogger(StormEffect.class).fatal("CastSpellLastTurnWatcher not found. game = " + game.getGameType().toString());
             }
             return true;
         }

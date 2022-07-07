@@ -1,6 +1,5 @@
 package mage.cards.s;
 
-import java.util.UUID;
 import mage.ApprovingObject;
 import mage.abilities.Ability;
 import mage.abilities.TriggeredAbilityImpl;
@@ -21,10 +20,10 @@ import mage.players.Player;
 import mage.target.TargetCard;
 import mage.target.common.TargetControlledCreaturePermanent;
 import mage.util.CardUtil;
-import org.apache.log4j.Logger;
+
+import java.util.UUID;
 
 /**
- *
  * @author escplan9 (Derek Monturo - dmontur1 at gmail dot com)
  */
 public final class Spellbinder extends CardImpl {
@@ -33,14 +32,14 @@ public final class Spellbinder extends CardImpl {
         super(ownerId, setInfo, new CardType[]{CardType.ARTIFACT}, "{3}");
         this.subtype.add(SubType.EQUIPMENT);
 
-        // Imprint - When Spellbinder enters the battlefield, you may exile 
+        // Imprint - When Spellbinder enters the battlefield, you may exile
         // an instant card from your hand.
         this.addAbility(new EntersBattlefieldTriggeredAbility(
                 new SpellbinderImprintEffect(), true)
                 .setAbilityWord(AbilityWord.IMPRINT)
         );
 
-        // Whenever equipped creature deals combat damage to a player, you may 
+        // Whenever equipped creature deals combat damage to a player, you may
         // copy the exiled card. If you do, you may cast the copy without paying its mana cost.
         this.addAbility(new SpellbinderTriggeredAbility());
 
@@ -183,9 +182,6 @@ class SpellbinderCopyEffect extends OneShotEffect {
                                     controller.cast(controller.chooseAbilityForCast(copiedCard, game, true),
                                             game, true, new ApprovingObject(source, game));
                                     game.getState().setValue("PlayFromNotOwnHandZone" + copiedCard.getId(), null);
-                                } else {
-                                    Logger.getLogger(SpellbinderCopyEffect.class).error(
-                                            "Spellbinder: spell ability == null " + copiedCard.getName());
                                 }
                             }
                         }
