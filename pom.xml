@@ -58,6 +58,7 @@
         <module>Mage.Server</module>
         <module>Mage.Sets</module>
         <module>Mage.Server.Console</module>
+        <module>Mage.SpringBoot</module>
         <module>Mage.Verify</module>
     </modules>
 
@@ -87,25 +88,10 @@
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
     </properties>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.3.2.RELEASE</version>
-    </parent>
-
     <dependencyManagement>
         <!-- OTHER dependencies - you must add it to child modules manually (copy groupId and artifactId without scope and version) -->
         <!-- write shared libs from all childs here to version control -->
         <dependencies>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-data-jpa</artifactId>
-            </dependency>
-
-            <dependency>
-                <groupId>mysql</groupId>
-                <artifactId>mysql-connector-java</artifactId>
-            </dependency>
             <dependency>
                 <!-- json support -->
                 <groupId>com.google.code.gson</groupId>
