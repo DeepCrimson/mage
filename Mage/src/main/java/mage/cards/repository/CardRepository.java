@@ -1,25 +1,11 @@
 package mage.cards.repository;
 
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.dao.GenericRawResults;
-import com.j256.ormlite.jdbc.JdbcConnectionSource;
-import com.j256.ormlite.stmt.QueryBuilder;
-import com.j256.ormlite.stmt.SelectArg;
-import com.j256.ormlite.stmt.Where;
-import com.j256.ormlite.support.ConnectionSource;
-import com.j256.ormlite.support.DatabaseConnection;
-import com.j256.ormlite.table.TableUtils;
 import mage.cards.CardSetInfo;
-import mage.constants.CardType;
 import mage.constants.SetType;
-import mage.constants.SuperType;
 import mage.game.events.Listener;
 import mage.util.RandomUtil;
-import org.apache.log4j.Logger;
 
 import java.io.File;
-import java.sql.SQLException;
 import java.util.*;
 
 /**
@@ -29,17 +15,6 @@ public enum CardRepository {
 
     instance;
 
-    private static final Logger logger = Logger.getLogger(CardRepository.class);
-
-    private static final String JDBC_URL = "jdbc:h2:file:./db/cards.h2;AUTO_SERVER=TRUE";
-    private static final String VERSION_ENTITY_NAME = "card";
-    // raise this if db structure was changed
-    private static final long CARD_DB_VERSION = 54;
-    // raise this if new cards were added to the server
-    private static final long CARD_CONTENT_VERSION = 241;
-    private Dao<CardInfo, Object> cardDao;
-    private Set<String> classNames;
-    private final RepositoryEventSource eventSource = new RepositoryEventSource();
 
     public static final Set<String> snowLandSetCodes = new HashSet<>(Arrays.asList(
             "CSP",
@@ -49,28 +24,21 @@ public enum CardRepository {
             "ICE",
             "KHM"
     ));
+    private static final String JDBC_URL = "jdbc:h2:file:./db/cards.h2;AUTO_SERVER=TRUE";
+    private static final String VERSION_ENTITY_NAME = "card";
+    // raise this if db structure was changed
+    private static final long CARD_DB_VERSION = 54;
+    // raise this if new cards were added to the server
+    private static final long CARD_CONTENT_VERSION = 241;
+    private final RepositoryEventSource eventSource = new RepositoryEventSource();
+    private Set<String> classNames;
 
     CardRepository() {
         File file = new File("db");
-        if (!file.exists()) {
-            file.mkdirs();
-        }
-        try {
-            ConnectionSource connectionSource = new JdbcConnectionSource(JDBC_URL);
+    }
 
-            boolean isObsolete = RepositoryUtil.isDatabaseObsolete(connectionSource, VERSION_ENTITY_NAME, CARD_DB_VERSION);
-            boolean isNewBuild = RepositoryUtil.isNewBuildRun(connectionSource, VERSION_ENTITY_NAME, CardRepository.class); // recreate db on new build
-            if (isObsolete || isNewBuild) {
-                //System.out.println("Local cards db is outdated, cleaning...");
-                TableUtils.dropTable(connectionSource, CardInfo.class, true);
-            }
-
-            TableUtils.createTableIfNotExists(connectionSource, CardInfo.class);
-            cardDao = DaoManager.createDao(connectionSource, CardInfo.class);
-            eventSource.fireRepositoryDbLoaded();
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error creating card repository - ", ex);
-        }
+    public static Boolean haveSnowLands(String setCode) {
+        return snowLandSetCodes.contains(setCode);
     }
 
     public void subscribe(Listener<RepositoryEvent> listener) {
@@ -78,66 +46,13 @@ public enum CardRepository {
     }
 
     public void saveCards(final List<CardInfo> newCards, long newContentVersion) {
-        try {
-            cardDao.callBatchTasks(() -> {
-                // add
-                if (newCards != null && !newCards.isEmpty()) {
-                    logger.info("DB: need to add " + newCards.size() + " new cards");
-                    try {
-                        for (CardInfo card : newCards) {
-                            cardDao.create(card);
-                            if (classNames != null) {
-                                classNames.add(card.getClassName());
-                            }
-                        }
-                    } catch (SQLException ex) {
-                        Logger.getLogger(CardRepository.class).error("Error adding cards to DB - ", ex);
-                    }
-                }
-
-                // no card updates
-
-                return null;
-            });
-
-            setContentVersion(newContentVersion);
-            eventSource.fireRepositoryDbUpdated();
-        } catch (Exception ex) {
-            //
-        }
     }
 
     public boolean cardExists(String className) {
-        try {
-            if (classNames == null) {
-                QueryBuilder<CardInfo, Object> qb = cardDao.queryBuilder();
-                qb.distinct().selectColumns("className").where().isNotNull("className");
-                List<CardInfo> results = cardDao.query(qb.prepare());
-                classNames = new TreeSet<>();
-                for (CardInfo card : results) {
-                    classNames.add(card.getClassName());
-                }
-            }
-            return classNames.contains(className);
-        } catch (SQLException ex) {
-        }
         return false;
     }
 
     public boolean cardExists(CardSetInfo className) {
-        try {
-            if (classNames == null) {
-                QueryBuilder<CardInfo, Object> qb = cardDao.queryBuilder();
-                qb.distinct().selectColumns("className").where().isNotNull("className");
-                List<CardInfo> results = cardDao.query(qb.prepare());
-                classNames = new TreeSet<>();
-                for (CardInfo card : results) {
-                    classNames.add(card.getClassName());
-                }
-            }
-            return classNames.contains(className.getName());
-        } catch (SQLException ex) {
-        }
         return false;
     }
 
@@ -165,153 +80,36 @@ public enum CardRepository {
         }
     }
 
-    public static Boolean haveSnowLands(String setCode) {
-        return snowLandSetCodes.contains(setCode);
-    }
-
     public Set<String> getNames() {
-        Set<String> names = new TreeSet<>();
-        try {
-            QueryBuilder<CardInfo, Object> qb = cardDao.queryBuilder();
-            qb.distinct().selectColumns("name", "modalDoubleFacesSecondSideName", "secondSideName", "flipCardName");
-            List<CardInfo> results = cardDao.query(qb.prepare());
-            for (CardInfo card : results) {
-                addNewNames(card, names);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error getting names from DB : " + ex);
-        }
-        return names;
+        return new TreeSet<>();
     }
 
     public Set<String> getNonLandNames() {
-        Set<String> names = new TreeSet<>();
-        try {
-            QueryBuilder<CardInfo, Object> qb = cardDao.queryBuilder();
-            qb.distinct().selectColumns("name", "modalDoubleFacesSecondSideName", "secondSideName", "flipCardName");
-            qb.where().not().like("types", new SelectArg('%' + CardType.LAND.name() + '%'));
-            List<CardInfo> results = cardDao.query(qb.prepare());
-            for (CardInfo card : results) {
-                addNewNames(card, names);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error getting non-land names from DB : " + ex);
-
-        }
-        return names;
+        return new TreeSet<>();
     }
 
     public Set<String> getNonbasicLandNames() {
-        Set<String> names = new TreeSet<>();
-        try {
-            QueryBuilder<CardInfo, Object> qb = cardDao.queryBuilder();
-            qb.distinct().selectColumns("name", "modalDoubleFacesSecondSideName", "secondSideName", "flipCardName");
-            Where<CardInfo, Object> where = qb.where();
-            where.and(
-                    where.not().like("supertypes", '%' + SuperType.BASIC.name() + '%'),
-                    where.like("types", '%' + CardType.LAND.name() + '%')
-            );
-            List<CardInfo> results = cardDao.query(qb.prepare());
-            for (CardInfo card : results) {
-                addNewNames(card, names);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error getting non-land names from DB : " + ex);
-
-        }
-        return names;
+        return new TreeSet<>();
     }
 
     public Set<String> getNotBasicLandNames() {
-        Set<String> names = new TreeSet<>();
-        try {
-            QueryBuilder<CardInfo, Object> qb = cardDao.queryBuilder();
-            qb.distinct().selectColumns("name", "modalDoubleFacesSecondSideName", "secondSideName", "flipCardName");
-            qb.where().not().like("supertypes", new SelectArg('%' + SuperType.BASIC.name() + '%'));
-            List<CardInfo> results = cardDao.query(qb.prepare());
-            for (CardInfo card : results) {
-                addNewNames(card, names);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error getting non-land names from DB : " + ex);
-
-        }
-        return names;
+        return new TreeSet<>();
     }
 
     public Set<String> getCreatureNames() {
-        Set<String> names = new TreeSet<>();
-        try {
-            QueryBuilder<CardInfo, Object> qb = cardDao.queryBuilder();
-            qb.distinct().selectColumns("name", "modalDoubleFacesSecondSideName", "secondSideName", "flipCardName");
-            qb.where().like("types", new SelectArg('%' + CardType.CREATURE.name() + '%'));
-            List<CardInfo> results = cardDao.query(qb.prepare());
-            for (CardInfo card : results) {
-                addNewNames(card, names);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error getting creature names from DB : " + ex);
-
-        }
-        return names;
+        return new TreeSet<>();
     }
 
     public Set<String> getArtifactNames() {
-        Set<String> names = new TreeSet<>();
-        try {
-            QueryBuilder<CardInfo, Object> qb = cardDao.queryBuilder();
-            qb.distinct().selectColumns("name", "modalDoubleFacesSecondSideName", "secondSideName", "flipCardName");
-            qb.where().like("types", new SelectArg('%' + CardType.ARTIFACT.name() + '%'));
-            List<CardInfo> results = cardDao.query(qb.prepare());
-            for (CardInfo card : results) {
-                addNewNames(card, names);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error getting artifact names from DB : " + ex);
-
-        }
-        return names;
+        return new TreeSet<>();
     }
 
     public Set<String> getNonLandAndNonCreatureNames() {
-        Set<String> names = new TreeSet<>();
-        try {
-            QueryBuilder<CardInfo, Object> qb = cardDao.queryBuilder();
-            qb.distinct().selectColumns("name", "modalDoubleFacesSecondSideName", "secondSideName", "flipCardName");
-            Where<CardInfo, Object> where = qb.where();
-            where.and(
-                    where.not().like("types", '%' + CardType.CREATURE.name() + '%'),
-                    where.not().like("types", '%' + CardType.LAND.name() + '%')
-            );
-            List<CardInfo> results = cardDao.query(qb.prepare());
-            for (CardInfo card : results) {
-                addNewNames(card, names);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error getting non-land and non-creature names from DB : " + ex);
-        }
-        return names;
+        return new TreeSet<>();
     }
 
     public Set<String> getNonArtifactAndNonLandNames() {
-        Set<String> names = new TreeSet<>();
-        try {
-            QueryBuilder<CardInfo, Object> qb = cardDao.queryBuilder();
-            qb.distinct().selectColumns("name", "modalDoubleFacesSecondSideName", "secondSideName", "flipCardName");
-            Where<CardInfo, Object> where = qb.where();
-            where.and(
-                    where.not().like("types", '%' + CardType.ARTIFACT.name() + '%'),
-                    where.not().like("types", '%' + CardType.LAND.name() + '%')
-            );
-            List<CardInfo> results = cardDao.query(qb.prepare());
-            for (CardInfo card : results) {
-                addNewNames(card, names);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error getting non-artifact non-land names from DB : " + ex);
-
-        }
-        return names;
+        return new TreeSet<>();
     }
 
     public CardInfo findCard(String setCode, String cardNumber) {
@@ -319,53 +117,14 @@ public enum CardRepository {
     }
 
     public CardInfo findCard(String setCode, String cardNumber, boolean ignoreNightCards) {
-        try {
-            QueryBuilder<CardInfo, Object> queryBuilder = cardDao.queryBuilder();
-            if (ignoreNightCards) {
-                queryBuilder.limit(1L).where()
-                        .eq("setCode", new SelectArg(setCode))
-                        .and().eq("cardNumber", new SelectArg(cardNumber))
-                        .and().eq("nightCard", new SelectArg(false));
-            } else {
-                queryBuilder.limit(1L).where()
-                        .eq("setCode", new SelectArg(setCode))
-                        .and().eq("cardNumber", new SelectArg(cardNumber));
-            }
-            List<CardInfo> result = cardDao.query(queryBuilder.prepare());
-            if (!result.isEmpty()) {
-                return result.get(0);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error finding card from DB : " + ex);
-
-        }
         return null;
     }
 
     public List<String> getClassNames() {
-        List<String> names = new ArrayList<>();
-        try {
-            List<CardInfo> results = cardDao.queryForAll();
-            for (CardInfo card : results) {
-                names.add(card.getClassName());
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error getting classnames from DB : " + ex);
-        }
-        return names;
+        return new ArrayList<>();
     }
 
     public List<CardInfo> getMissingCards(List<String> classNames) {
-        try {
-            QueryBuilder<CardInfo, Object> queryBuilder = cardDao.queryBuilder();
-            queryBuilder.where().not().in("className", classNames);
-
-            return cardDao.query(queryBuilder.prepare());
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error getting missing cards from DB : " + ex);
-
-        }
-
         return Collections.emptyList();
     }
 
@@ -463,74 +222,14 @@ public enum CardRepository {
      * @return
      */
     public List<CardInfo> findCards(String name, long limitByMaxAmount) {
-        try {
-            QueryBuilder<CardInfo, Object> queryBuilder = cardDao.queryBuilder();
-            queryBuilder.where().eq("name", new SelectArg(name));
-            if (limitByMaxAmount > 0) {
-                queryBuilder.limit(limitByMaxAmount);
-            }
-
-            List<CardInfo> result = cardDao.query(queryBuilder.prepare());
-
-            // Got no results, could be because the name referred to a double-face cards (e.g. Malakir Rebirth // Malakir Mire)
-            if (result.isEmpty() && name.contains(" // ")) {
-                // If there IS a " // " then the card could be either a double-face card (e.g. Malakir Rebirth // Malakir Mire)
-                // OR a split card (e.g. Assault // Battery).
-                // Since you can't tell based on the name, we split the text based on " // " and try the operation again with
-                // the string on the left side of " // " (double-faced cards are stored under the name on the left of the " // ").
-                queryBuilder.where().eq("name", new SelectArg(name.split(" // ", 2)[0]));
-
-                result = cardDao.query(queryBuilder.prepare());
-            }
-
-            return result;
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error during execution of raw sql statement", ex);
-        }
-
         return Collections.emptyList();
     }
 
     public List<CardInfo> findCardsByClass(String canonicalClassName) {
-        try {
-            QueryBuilder<CardInfo, Object> queryBuilder = cardDao.queryBuilder();
-            queryBuilder.where().eq("className", new SelectArg(canonicalClassName));
-            return cardDao.query(queryBuilder.prepare());
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error during execution of raw sql statement", ex);
-        }
         return Collections.emptyList();
     }
 
     public List<CardInfo> findCardsCaseInsensitive(String name) {
-        try {
-            String sqlName = name.toLowerCase(Locale.ENGLISH).replaceAll("'", "''");
-            GenericRawResults<CardInfo> rawResults = cardDao.queryRaw(
-                    "select * from " + CardRepository.VERSION_ENTITY_NAME + " where lower_name = '" + sqlName + '\'',
-                    cardDao.getRawRowMapper());
-
-            List<CardInfo> result = rawResults.getResults();
-
-            // Got no results, could be because the name referred to a double-face cards (e.g. Malakir Rebirth // Malakir Mire)
-            if (result.isEmpty() && sqlName.contains(" // ")) {
-                // If there IS a " // " then the card could be either a double-face card (e.g. Malakir Rebirth // Malakir Mire)
-                // OR a split card (e.g. Assault // Battery).
-                // Since you can't tell based on the name, we split the text based on " // " and try the operation again with
-                // the string on the left side of " // " (double-faced cards are stored under the name on the left of the " // ").
-                String leftCardName = sqlName.split(" // ", 2)[0];
-
-                GenericRawResults<CardInfo> rawResults2 = cardDao.queryRaw(
-                        "select * from " + CardRepository.VERSION_ENTITY_NAME + " where lower_name = '" + leftCardName + '\'',
-                        cardDao.getRawRowMapper());
-
-                result = rawResults2.getResults();
-            }
-
-            return result;
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error during execution of raw sql statement", ex);
-        }
-
         return Collections.emptyList();
     }
 
@@ -546,13 +245,24 @@ public enum CardRepository {
     }
 
     public CardInfo findOldestNonPromoVersionCard(String name) {
-        List<CardInfo> allVersions = this.findCards(name);
-        if (!allVersions.isEmpty()) {
-            allVersions.sort(new OldestNonPromoComparator());
-            return allVersions.get(0);
-        } else {
-            return null;
-        }
+        return null;
+    }
+
+    public long getContentVersionFromDB() {
+        return 0;
+    }
+
+    public void setContentVersion(long version) {
+    }
+
+    public long getContentVersionConstant() {
+        return CARD_CONTENT_VERSION;
+    }
+
+    public void closeDB() {
+    }
+
+    public void openDB() {
     }
 
     static class OldestNonPromoComparator implements Comparator<CardInfo> {
@@ -573,48 +283,6 @@ public enum CardRepository {
                 return -1;
             }
             return Integer.compare(a.getCardNumberAsInt(), b.getCardNumberAsInt());
-        }
-    }
-
-    public long getContentVersionFromDB() {
-        try {
-            ConnectionSource connectionSource = new JdbcConnectionSource(JDBC_URL);
-            return RepositoryUtil.getDatabaseVersion(connectionSource, VERSION_ENTITY_NAME + "Content");
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error getting content version from DB - ", ex);
-        }
-        return 0;
-    }
-
-    public void setContentVersion(long version) {
-        try {
-            ConnectionSource connectionSource = new JdbcConnectionSource(JDBC_URL);
-            RepositoryUtil.updateVersion(connectionSource, VERSION_ENTITY_NAME + "Content", version);
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error getting content version - ", ex);
-        }
-    }
-
-    public long getContentVersionConstant() {
-        return CARD_CONTENT_VERSION;
-    }
-
-    public void closeDB() {
-        try {
-            if (cardDao != null && cardDao.getConnectionSource() != null) {
-                DatabaseConnection conn = cardDao.getConnectionSource().getReadWriteConnection(cardDao.getTableName());
-                conn.executeStatement("shutdown compact", 0);
-            }
-        } catch (SQLException ex) {
-        }
-    }
-
-    public void openDB() {
-        try {
-            ConnectionSource connectionSource = new JdbcConnectionSource(JDBC_URL);
-            cardDao = DaoManager.createDao(connectionSource, CardInfo.class);
-        } catch (SQLException ex) {
-            Logger.getLogger(CardRepository.class).error("Error opening card repository - ", ex);
         }
     }
 }

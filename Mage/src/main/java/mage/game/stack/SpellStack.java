@@ -1,4 +1,3 @@
-
 package mage.game.stack;
 
 import mage.MageObject;
@@ -39,7 +38,6 @@ public class SpellStack extends ArrayDeque<StackObject> {
         } finally {
             if (top != null) {
                 if (contains(top)) {
-                    logger.warn("StackObject was still on the stack after resolving" + top.getName());
                     this.remove(top, game);
                 }
             }

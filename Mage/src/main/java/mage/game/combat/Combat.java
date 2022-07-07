@@ -42,10 +42,10 @@ import java.util.stream.Collectors;
 public class Combat implements Serializable, Copyable<Combat> {
 
     private static FilterCreatureForCombatBlock filterBlockers = new FilterCreatureForCombatBlock();
-    // There are effects that let creatures assigns combat damage equal to its toughness rather than its power
-    private boolean useToughnessForDamage;
     private final List<FilterCreaturePermanent> useToughnessForDamageFilters = new ArrayList<>();
-
+    // which creature is forced to attack which defender(s). If set is empty, the creature can attack every possible defender
+    private final Map<UUID, Set<UUID>> creaturesForcedToAttack = new HashMap<>();
+    private final HashSet<UUID> attackersTappedByAttack = new HashSet<>();
     protected List<CombatGroup> groups = new ArrayList<>();
     protected Map<UUID, CombatGroup> blockingGroups = new HashMap<>();
     // player and planeswalker ids
@@ -55,12 +55,9 @@ public class Combat implements Serializable, Copyable<Combat> {
     protected UUID attackingPlayerId; //the player that is attacking
     // <creature that can block, <all attackers that force the creature to block it>>
     protected Map<UUID, Set<UUID>> creatureMustBlockAttackers = new HashMap<>();
-
-    // which creature is forced to attack which defender(s). If set is empty, the creature can attack every possible defender
-    private final Map<UUID, Set<UUID>> creaturesForcedToAttack = new HashMap<>();
+    // There are effects that let creatures assigns combat damage equal to its toughness rather than its power
+    private boolean useToughnessForDamage;
     private int maxAttackers = Integer.MIN_VALUE;
-
-    private final HashSet<UUID> attackersTappedByAttack = new HashSet<>();
 
     public Combat() {
         this.useToughnessForDamage = false;
@@ -110,6 +107,12 @@ public class Combat implements Serializable, Copyable<Combat> {
      */
     public Set<UUID> getDefenders() {
         return defenders;
+    }
+
+    public void setDefenders(Game game) {
+        for (UUID playerId : getAttackablePlayers(game)) {
+            addDefender(playerId, game);
+        }
     }
 
     public List<UUID> getAttackers() {
@@ -558,7 +561,6 @@ public class Combat implements Serializable, Copyable<Combat> {
                         }
                         check = true; // do the check again
                         if (numberOfChecks > 50) {
-                            logger.error("Seems to be an AI declare attacker lock (reached 50 check iterations) " + (sourceObject == null ? "null" : sourceObject.getIdName()));
                             return true; // break the check
                         }
                         continue Check;
@@ -1242,12 +1244,6 @@ public class Combat implements Serializable, Copyable<Combat> {
             }
         }
         return true;
-    }
-
-    public void setDefenders(Game game) {
-        for (UUID playerId : getAttackablePlayers(game)) {
-            addDefender(playerId, game);
-        }
     }
 
     public List<UUID> getAttackablePlayers(Game game) {
