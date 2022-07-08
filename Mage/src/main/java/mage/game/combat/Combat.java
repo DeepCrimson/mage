@@ -30,7 +30,6 @@ import mage.target.common.TargetControlledPermanent;
 import mage.target.common.TargetDefender;
 import mage.util.CardUtil;
 import mage.util.Copyable;
-import mage.util.trace.TraceUtil;
 
 import java.io.Serializable;
 import java.util.*;
@@ -628,8 +627,6 @@ public class Combat implements Serializable, Copyable<Combat> {
                 }
             }
         }
-        // tool to catch the bug about flyers blocked by non flyers or intimidate blocked by creatures with other colors
-        TraceUtil.traceCombatIfNeeded(game, game.getCombat());
     }
 
     /**

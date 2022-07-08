@@ -2,10 +2,6 @@ package mage.server.draft;
 
 import mage.MageException;
 import mage.game.draft.Draft;
-import mage.game.draft.DraftPlayer;
-import mage.game.events.Listener;
-import mage.game.events.PlayerQueryEvent;
-import mage.game.events.TableEvent;
 import mage.players.Player;
 import mage.server.game.GameController;
 import mage.server.managers.ManagerFactory;
@@ -43,42 +39,6 @@ public class DraftController {
     }
 
     private void init() {
-        draft.addTableEventListener(
-                (Listener<TableEvent>) event -> {
-                    try {
-                        switch (event.getEventType()) {
-                            case UPDATE:
-                                updateDraft();
-                                break;
-                            case END:
-                                endDraft();
-                                break;
-                        }
-                    } catch (MageException ex) {
-                        logger.fatal("Table event listener error", ex);
-                    }
-                }
-        );
-        draft.addPlayerQueryEventListener(
-                (Listener<PlayerQueryEvent>) event -> {
-                    try {
-                        switch (event.getQueryType()) {
-                            case PICK_CARD:
-                                pickCard(event.getPlayerId(), event.getMax());
-                                break;
-                        }
-                    } catch (MageException ex) {
-                        logger.fatal("Table event listener error", ex);
-                    }
-                }
-        );
-        for (DraftPlayer player : draft.getPlayers()) {
-            if (!player.getPlayer().isHuman()) {
-                player.setJoined();
-                logger.debug("player " + player.getPlayer().getId() + " has joined draft " + draft.getId());
-            }
-        }
-        checkStart();
     }
 
     private UUID getPlayerId(UUID userId) {
@@ -86,15 +46,6 @@ public class DraftController {
     }
 
     public void join(UUID userId) {
-        UUID playerId = userPlayerMap.get(userId);
-        DraftSession draftSession = new DraftSession(managerFactory, draft, userId, playerId);
-        draftSessions.put(playerId, draftSession);
-        managerFactory.userManager().getUser(userId).ifPresent(user -> {
-            user.addDraft(playerId, draftSession);
-            logger.debug("User " + user.getName() + " has joined draft " + draft.getId());
-            draft.getPlayer(playerId).setJoined();
-        });
-        checkStart();
     }
 
     public Optional<DraftSession> getDraftSession(UUID playerId) {
@@ -105,45 +56,7 @@ public class DraftController {
     }
 
     public boolean replacePlayer(Player oldPlayer, Player newPlayer) {
-        if (draft.replacePlayer(oldPlayer, newPlayer)) {
-            DraftSession draftSession = draftSessions.get(oldPlayer.getId());
-            if (draftSession != null) {
-                draftSession.draftOver(); // closes the draft panel of the replaced player
-                draftSessions.remove(oldPlayer.getId());
-            }
-            return true;
-        }
         return false;
-    }
-
-    private synchronized void checkStart() {
-        if (!draft.isStarted() && allJoined()) {
-            draft.setStarted();
-            managerFactory.threadExecutor().getCallExecutor().execute(this::startDraft);
-        }
-    }
-
-    private void startDraft() {
-        for (final Entry<UUID, DraftSession> entry : draftSessions.entrySet()) {
-            if (!entry.getValue().init()) {
-                logger.fatal("Unable to initialize client for playerId " + entry.getKey());
-                //TODO: generate client error message
-                return;
-            }
-        }
-        draft.start();
-    }
-
-    private boolean allJoined() {
-        if (!draft.allJoined()) {
-            return false;
-        }
-        for (DraftPlayer player : draft.getPlayers()) {
-            if (player.getPlayer().isHuman() && !draftSessions.containsKey(player.getPlayer().getId())) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private void leave(UUID userId) {

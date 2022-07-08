@@ -3,7 +3,6 @@ package mage.server.tournament;
 import mage.cards.decks.Deck;
 import mage.server.User;
 import mage.server.managers.ManagerFactory;
-import org.apache.log4j.Logger;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -15,16 +14,13 @@ import java.util.concurrent.ScheduledFuture;
  */
 public class TournamentSession {
 
-    protected static final Logger logger = Logger.getLogger(TournamentSession.class);
-
-    private final ManagerFactory managerFactory;
     protected final UUID userId;
     protected final UUID playerId;
     protected final UUID tableId;
-    protected boolean killed = false;
-
-    private ScheduledFuture<?> futureTimeout;
     protected final ScheduledExecutorService timeoutExecutor;
+    private final ManagerFactory managerFactory;
+    protected boolean killed = false;
+    private ScheduledFuture<?> futureTimeout;
 
     public TournamentSession(ManagerFactory managerFactory, UUID userId, UUID tableId, UUID playerId) {
         this.managerFactory = managerFactory;

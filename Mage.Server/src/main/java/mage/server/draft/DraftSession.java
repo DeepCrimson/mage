@@ -1,7 +1,6 @@
 package mage.server.draft;
 
 import mage.server.managers.ManagerFactory;
-import org.apache.log4j.Logger;
 
 import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
@@ -12,16 +11,13 @@ import java.util.concurrent.ScheduledFuture;
  */
 public class DraftSession {
 
-    protected static final Logger logger = Logger.getLogger(DraftSession.class);
-
-    private final ManagerFactory managerFactory;
     protected final UUID userId;
     protected final UUID playerId;
+    protected final ScheduledExecutorService timeoutExecutor;
+    private final ManagerFactory managerFactory;
     protected boolean killed = false;
     protected UUID markedCard;
-
     private ScheduledFuture<?> futureTimeout;
-    protected final ScheduledExecutorService timeoutExecutor;
 
     public DraftSession(ManagerFactory managerFactory, UUID userId, UUID playerId) {
         this.managerFactory = managerFactory;

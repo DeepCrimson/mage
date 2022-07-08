@@ -6,7 +6,6 @@ import mage.remote.Connection;
 import mage.remote.Session;
 import mage.remote.SessionImpl;
 import mage.utils.MageVersion;
-import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
@@ -21,30 +20,17 @@ import java.util.prefs.Preferences;
  */
 public class ConsoleFrame extends javax.swing.JFrame implements MageClient {
 
-    private static final Logger logger = Logger.getLogger(ConsoleFrame.class);
-
-    private static Session session;
-    private ConnectDialog connectDialog;
     private static final Preferences prefs = Preferences.userNodeForPackage(ConsoleFrame.class);
     private static final MageVersion version = new MageVersion(ConsoleFrame.class);
-
     private static final ScheduledExecutorService pingTaskExecutor = Executors.newSingleThreadScheduledExecutor();
-
-    /**
-     * @return the session
-     */
-    public static Session getSession() {
-        return session;
-    }
-
-    public static Preferences getPreferences() {
-        return prefs;
-    }
-
-    @Override
-    public MageVersion getVersion() {
-        return version;
-    }
+    private static Session session;
+    private ConnectDialog connectDialog;
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnConnect;
+    private javax.swing.JButton btnSendMessage;
+    private mage.server.console.ConsolePanel consolePanel1;
+    private javax.swing.JToolBar jToolBar1;
+    private javax.swing.JLabel lblStatus;
 
     /**
      * Creates new form ConsoleFrame
@@ -64,10 +50,35 @@ public class ConsoleFrame extends javax.swing.JFrame implements MageClient {
             session = new SessionImpl(this);
             connectDialog = new ConnectDialog();
         } catch (Exception ex) {
-            logger.fatal("", ex);
         }
 
         pingTaskExecutor.scheduleAtFixedRate(() -> session.ping(), 20, 20, TimeUnit.SECONDS);
+    }
+
+    /**
+     * @return the session
+     */
+    public static Session getSession() {
+        return session;
+    }
+
+    public static Preferences getPreferences() {
+        return prefs;
+    }
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+
+        java.awt.EventQueue.invokeLater(() -> {
+            new ConsoleFrame().setVisible(true);
+        });
+    }
+
+    @Override
+    public MageVersion getVersion() {
+        return version;
     }
 
     public boolean connect(Connection connection) {
@@ -171,29 +182,9 @@ public class ConsoleFrame extends javax.swing.JFrame implements MageClient {
         }
     }//GEN-LAST:event_btnSendMessageActionPerformed
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        logger.info("Starting MAGE server console version " + version);
-        logger.info("Logging level: " + logger.getEffectiveLevel());
-
-        java.awt.EventQueue.invokeLater(() -> {
-            new ConsoleFrame().setVisible(true);
-            logger.info("Started MAGE server console");
-        });
-    }
-
     private ConsoleFrame getFrame() {
         return this;
     }
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnConnect;
-    private javax.swing.JButton btnSendMessage;
-    private mage.server.console.ConsolePanel consolePanel1;
-    private javax.swing.JToolBar jToolBar1;
-    private javax.swing.JLabel lblStatus;
     // End of variables declaration//GEN-END:variables
 
     @Override

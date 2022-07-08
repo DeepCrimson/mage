@@ -66,10 +66,6 @@ public class ChatSession {
                     }
                 }
                 String message = reason.getMessage();
-
-                if (!message.isEmpty()) {
-                    broadcast(null, userName + message, true, null, null);
-                }
             }
         } catch (Exception ex) {
         }

@@ -2,7 +2,6 @@ package mage.server.game;
 
 import mage.game.Game;
 import mage.server.managers.UserManager;
-import org.apache.log4j.Logger;
 
 import java.util.UUID;
 
@@ -11,13 +10,11 @@ import java.util.UUID;
  */
 public class GameSessionWatcher {
 
-    protected static final Logger logger = Logger.getLogger(GameSessionWatcher.class);
-
-    private final UserManager userManager;
     protected final UUID userId;
     protected final Game game;
-    protected boolean killed = false;
     protected final boolean isPlayer;
+    private final UserManager userManager;
+    protected boolean killed = false;
 
     public GameSessionWatcher(UserManager userManager, UUID userId, Game game, boolean isPlayer) {
         this.userManager = userManager;
