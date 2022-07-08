@@ -62,7 +62,6 @@ import mage.target.common.TargetDiscard;
 import mage.util.CardUtil;
 import mage.util.GameLog;
 import mage.util.RandomUtil;
-import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.*;
@@ -71,14 +70,19 @@ import java.util.stream.Collectors;
 
 public abstract class PlayerImpl implements Player, Serializable {
 
-    private static final Logger logger = Logger.getLogger(PlayerImpl.class);
-
+    protected final UUID playerId;
+    protected final List<AlternativeSourceCosts> alternativeSourceCosts = new ArrayList<>();
+    // Used during available mana calculation to give back possible available net mana from triggered mana abilities (No need to copy)
+    protected final List<List<Mana>> availableTriggeredManaList = new ArrayList<>();
+    /**
+     * During some steps we can't play anything
+     */
+    protected final Map<PhaseStep, Step.StepPart> silentPhaseSteps = ImmutableMap.<PhaseStep, Step.StepPart>builder().
+            put(PhaseStep.DECLARE_ATTACKERS, Step.StepPart.PRE).build();
     /**
      * Used to cancel waiting requests send to the player
      */
     protected boolean abort;
-
-    protected final UUID playerId;
     protected String name;
     protected boolean human;
     protected int life;
@@ -115,11 +119,9 @@ public abstract class PlayerImpl implements Player, Serializable {
      */
     protected boolean passedAllTurns; // F9
     protected AbilityType justActivatedType; // used to check if priority can be passed automatically
-
     protected int turns;
     protected int storedBookmark = -1;
     protected int priorityTimeLeft = Integer.MAX_VALUE;
-
     // conceded or connection lost game
     protected boolean left;
     // set if the player quits the complete match
@@ -128,10 +130,8 @@ public abstract class PlayerImpl implements Player, Serializable {
     protected boolean timerTimeout;
     // set if the player lost match because of idle timeout
     protected boolean idleTimeout;
-
     protected RangeOfInfluence range;
     protected Set<UUID> inRange = new HashSet<>(); // players list in current range of influence (updates each turn)
-
     protected boolean isTestMode = false;
     protected boolean canGainLife = true;
     protected boolean canLoseLife = true;
@@ -139,52 +139,30 @@ public abstract class PlayerImpl implements Player, Serializable {
     protected boolean loseByZeroOrLessLife = true;
     protected boolean canPlayCardsFromGraveyard = true;
     protected boolean drawsOnOpponentsTurn = false;
-
     protected FilterPermanent sacrificeCostFilter;
-
-    protected final List<AlternativeSourceCosts> alternativeSourceCosts = new ArrayList<>();
-
     protected boolean isGameUnderControl = true;
     protected UUID turnController;
     protected List<UUID> turnControllers = new ArrayList<>();
     protected Set<UUID> playersUnderYourControl = new HashSet<>();
-
     protected Set<UUID> usersAllowedToSeeHandCards = new HashSet<>();
-
     protected List<UUID> attachments = new ArrayList<>();
-
     protected boolean topCardRevealed = false;
-
     // 800.4i When a player leaves the game, any continuous effects with durations that last until that player's next turn
     // or until a specific point in that turn will last until that turn would have begun.
     // They neither expire immediately nor last indefinitely.
     protected boolean reachedNextTurnAfterLeaving = false;
-
     // indicates that the spell with the set sourceId can be cast with an alternate mana costs (can also be no mana costs)
     // support multiple cards with alternative mana cost
     protected Set<UUID> castSourceIdWithAlternateMana = new HashSet<>();
     protected Map<UUID, ManaCosts<ManaCost>> castSourceIdManaCosts = new HashMap<>();
     protected Map<UUID, Costs<Cost>> castSourceIdCosts = new HashMap<>();
-
     // indicates that the player is in mana payment phase
     protected boolean payManaMode = false;
-
     protected UserData userData;
     protected MatchPlayer matchPlayer;
-
     protected List<Designation> designations = new ArrayList<>();
-
     // mana colors the player can handle like Phyrexian mana
     protected FilterMana phyrexianColors;
-
-    // Used during available mana calculation to give back possible available net mana from triggered mana abilities (No need to copy)
-    protected final List<List<Mana>> availableTriggeredManaList = new ArrayList<>();
-
-    /**
-     * During some steps we can't play anything
-     */
-    protected final Map<PhaseStep, Step.StepPart> silentPhaseSteps = ImmutableMap.<PhaseStep, Step.StepPart>builder().
-            put(PhaseStep.DECLARE_ATTACKERS, Step.StepPart.PRE).build();
 
     public PlayerImpl(String name, RangeOfInfluence range) {
         this(UUID.randomUUID());
@@ -290,6 +268,92 @@ public abstract class PlayerImpl implements Player, Serializable {
         for (Designation object : player.designations) {
             this.designations.add(object.copy());
         }
+    }
+
+    /**
+     * Return spells for possible cast Uses in GUI to show only playable spells
+     * for choosing from the card (example: effect allow to cast card and player
+     * must choose the spell ability)
+     *
+     * @param game
+     * @param playerId
+     * @param object
+     * @param zone
+     * @param noMana
+     * @return
+     */
+    public static LinkedHashMap<UUID, SpellAbility> getCastableSpellAbilities(Game game, UUID playerId, MageObject object, Zone zone, boolean noMana) {
+        // it uses simple check from spellCanBeActivatedRegularlyNow
+        // reason: no approved info here (e.g. forced to choose spell ability from cast card)
+        LinkedHashMap<UUID, SpellAbility> useable = new LinkedHashMap<>();
+        Abilities<Ability> allAbilities;
+        if (object instanceof Card) {
+            allAbilities = ((Card) object).getAbilities(game);
+        } else {
+            allAbilities = object.getAbilities();
+        }
+        for (SpellAbility spellAbility : allAbilities
+                .stream()
+                .filter(SpellAbility.class::isInstance)
+                .map(SpellAbility.class::cast)
+                .collect(Collectors.toList())) {
+            switch (spellAbility.getSpellAbilityType()) {
+                case BASE_ALTERNATE:
+                    // rules:
+                    // If you cast a spell “without paying its mana cost,” you can’t choose to cast it for
+                    // any alternative costs. You can, however, pay additional costs, such as kicker costs.
+                    // If the card has any mandatory additional costs, those must be paid to cast the spell.
+                    // (2021-02-05)
+                    if (!noMana) {
+                        if (spellAbility.spellCanBeActivatedRegularlyNow(playerId, game)) {
+                            useable.put(spellAbility.getId(), spellAbility);  // example: Chandra, Torch of Defiance +1 loyal ability
+                        }
+                        return useable;
+                    }
+                    break;
+                case SPLIT_FUSED:
+                    // rules:
+                    // If you cast a split card with fuse from your hand without paying its mana cost,
+                    // you can choose to use its fuse ability and cast both halves without paying their mana costs.
+                    if (zone == Zone.HAND) {
+                        if (spellAbility.canChooseTarget(game, playerId)) {
+                            useable.put(spellAbility.getId(), spellAbility);
+                        }
+                    }
+                case SPLIT:
+                    if (((SplitCard) object).getLeftHalfCard().getSpellAbility().canChooseTarget(game, playerId)) {
+                        useable.put(
+                                ((SplitCard) object).getLeftHalfCard().getSpellAbility().getId(),
+                                ((SplitCard) object).getLeftHalfCard().getSpellAbility()
+                        );
+                    }
+                    if (((SplitCard) object).getRightHalfCard().getSpellAbility().canChooseTarget(game, playerId)) {
+                        useable.put(
+                                ((SplitCard) object).getRightHalfCard().getSpellAbility().getId(),
+                                ((SplitCard) object).getRightHalfCard().getSpellAbility()
+                        );
+                    }
+                    return useable;
+                case SPLIT_AFTERMATH:
+                    if (zone == Zone.GRAVEYARD) {
+                        if (((SplitCard) object).getRightHalfCard().getSpellAbility().canChooseTarget(game, playerId)) {
+                            useable.put(((SplitCard) object).getRightHalfCard().getSpellAbility().getId(),
+                                    ((SplitCard) object).getRightHalfCard().getSpellAbility());
+                        }
+                    } else {
+                        if (((SplitCard) object).getLeftHalfCard().getSpellAbility().canChooseTarget(game, playerId)) {
+                            useable.put(((SplitCard) object).getLeftHalfCard().getSpellAbility().getId(),
+                                    ((SplitCard) object).getLeftHalfCard().getSpellAbility());
+                        }
+                    }
+                    return useable;
+                default:
+                    if (spellAbility.spellCanBeActivatedRegularlyNow(playerId, game)) {
+                        useable.put(spellAbility.getId(), spellAbility);
+                    }
+            }
+        }
+        return useable;
     }
 
     @Override
@@ -565,12 +629,6 @@ public abstract class PlayerImpl implements Player, Serializable {
     }
 
     @Override
-    public void setTurnControlledBy(UUID playerId) {
-        this.turnController = playerId;
-        this.turnControllers.add(playerId);
-    }
-
-    @Override
     public List<UUID> getTurnControllers() {
         return this.turnControllers;
     }
@@ -578,6 +636,12 @@ public abstract class PlayerImpl implements Player, Serializable {
     @Override
     public UUID getTurnControlledBy() {
         return this.turnController;
+    }
+
+    @Override
+    public void setTurnControlledBy(UUID playerId) {
+        this.turnController = playerId;
+        this.turnControllers.add(playerId);
     }
 
     @Override
@@ -1184,7 +1248,6 @@ public abstract class PlayerImpl implements Player, Serializable {
 
         //20091005 - 601.2a
         if (ability.getSourceId() == null) {
-            logger.error("Ability without sourceId turn " + game.getTurnNum() + ". Ability: " + ability.getRule());
             return false;
         }
         Card card = game.getCard(ability.getSourceId());
@@ -1199,7 +1262,6 @@ public abstract class PlayerImpl implements Player, Serializable {
                 card.cast(game, fromZone, ability, playerId);
                 Spell spell = game.getStack().getSpell(ability.getId());
                 if (spell == null) {
-                    logger.error("Got no spell from stack. ability: " + ability.getRule());
                     return false;
                 }
                 if (card.isCopy()) {
@@ -1517,7 +1579,6 @@ public abstract class PlayerImpl implements Player, Serializable {
     @Override
     public boolean triggerAbility(TriggeredAbility triggeredAbility, Game game) {
         if (triggeredAbility == null) {
-            logger.warn("Null source in triggerAbility method");
             throw new IllegalArgumentException("source TriggeredAbility  must not be null");
         }
         //20091005 - 603.3c, 603.3d
@@ -1556,92 +1617,6 @@ public abstract class PlayerImpl implements Player, Serializable {
         game.getState().setValue(event.getId().toString(), ability.getTriggerEvent());
         game.fireEvent(event);
         return false;
-    }
-
-    /**
-     * Return spells for possible cast Uses in GUI to show only playable spells
-     * for choosing from the card (example: effect allow to cast card and player
-     * must choose the spell ability)
-     *
-     * @param game
-     * @param playerId
-     * @param object
-     * @param zone
-     * @param noMana
-     * @return
-     */
-    public static LinkedHashMap<UUID, SpellAbility> getCastableSpellAbilities(Game game, UUID playerId, MageObject object, Zone zone, boolean noMana) {
-        // it uses simple check from spellCanBeActivatedRegularlyNow
-        // reason: no approved info here (e.g. forced to choose spell ability from cast card)
-        LinkedHashMap<UUID, SpellAbility> useable = new LinkedHashMap<>();
-        Abilities<Ability> allAbilities;
-        if (object instanceof Card) {
-            allAbilities = ((Card) object).getAbilities(game);
-        } else {
-            allAbilities = object.getAbilities();
-        }
-        for (SpellAbility spellAbility : allAbilities
-                .stream()
-                .filter(SpellAbility.class::isInstance)
-                .map(SpellAbility.class::cast)
-                .collect(Collectors.toList())) {
-            switch (spellAbility.getSpellAbilityType()) {
-                case BASE_ALTERNATE:
-                    // rules:
-                    // If you cast a spell “without paying its mana cost,” you can’t choose to cast it for
-                    // any alternative costs. You can, however, pay additional costs, such as kicker costs.
-                    // If the card has any mandatory additional costs, those must be paid to cast the spell.
-                    // (2021-02-05)
-                    if (!noMana) {
-                        if (spellAbility.spellCanBeActivatedRegularlyNow(playerId, game)) {
-                            useable.put(spellAbility.getId(), spellAbility);  // example: Chandra, Torch of Defiance +1 loyal ability
-                        }
-                        return useable;
-                    }
-                    break;
-                case SPLIT_FUSED:
-                    // rules:
-                    // If you cast a split card with fuse from your hand without paying its mana cost,
-                    // you can choose to use its fuse ability and cast both halves without paying their mana costs.
-                    if (zone == Zone.HAND) {
-                        if (spellAbility.canChooseTarget(game, playerId)) {
-                            useable.put(spellAbility.getId(), spellAbility);
-                        }
-                    }
-                case SPLIT:
-                    if (((SplitCard) object).getLeftHalfCard().getSpellAbility().canChooseTarget(game, playerId)) {
-                        useable.put(
-                                ((SplitCard) object).getLeftHalfCard().getSpellAbility().getId(),
-                                ((SplitCard) object).getLeftHalfCard().getSpellAbility()
-                        );
-                    }
-                    if (((SplitCard) object).getRightHalfCard().getSpellAbility().canChooseTarget(game, playerId)) {
-                        useable.put(
-                                ((SplitCard) object).getRightHalfCard().getSpellAbility().getId(),
-                                ((SplitCard) object).getRightHalfCard().getSpellAbility()
-                        );
-                    }
-                    return useable;
-                case SPLIT_AFTERMATH:
-                    if (zone == Zone.GRAVEYARD) {
-                        if (((SplitCard) object).getRightHalfCard().getSpellAbility().canChooseTarget(game, playerId)) {
-                            useable.put(((SplitCard) object).getRightHalfCard().getSpellAbility().getId(),
-                                    ((SplitCard) object).getRightHalfCard().getSpellAbility());
-                        }
-                    } else {
-                        if (((SplitCard) object).getLeftHalfCard().getSpellAbility().canChooseTarget(game, playerId)) {
-                            useable.put(((SplitCard) object).getLeftHalfCard().getSpellAbility().getId(),
-                                    ((SplitCard) object).getLeftHalfCard().getSpellAbility());
-                        }
-                    }
-                    return useable;
-                default:
-                    if (spellAbility.spellCanBeActivatedRegularlyNow(playerId, game)) {
-                        useable.put(spellAbility.getId(), spellAbility);
-                    }
-            }
-        }
-        return useable;
     }
 
     @Override
@@ -2023,14 +1998,14 @@ public abstract class PlayerImpl implements Player, Serializable {
     }
 
     @Override
-    public void setLifeTotalCanChange(boolean lifeTotalCanChange) {
-        this.canGainLife = lifeTotalCanChange;
-        this.canLoseLife = lifeTotalCanChange;
+    public boolean isLifeTotalCanChange() {
+        return canGainLife || canLoseLife;
     }
 
     @Override
-    public boolean isLifeTotalCanChange() {
-        return canGainLife || canLoseLife;
+    public void setLifeTotalCanChange(boolean lifeTotalCanChange) {
+        this.canGainLife = lifeTotalCanChange;
+        this.canLoseLife = lifeTotalCanChange;
     }
 
     @Override
@@ -2339,13 +2314,13 @@ public abstract class PlayerImpl implements Player, Serializable {
     }
 
     @Override
-    public void setMaxAttackedBy(int maxAttackedBy) {
-        this.maxAttackedBy = maxAttackedBy;
+    public int getMaxAttackedBy() {
+        return maxAttackedBy;
     }
 
     @Override
-    public int getMaxAttackedBy() {
-        return maxAttackedBy;
+    public void setMaxAttackedBy(int maxAttackedBy) {
+        this.maxAttackedBy = maxAttackedBy;
     }
 
     @Override
@@ -2403,7 +2378,6 @@ public abstract class PlayerImpl implements Player, Serializable {
     public void quit(Game game) {
         quit = true;
         this.concede(game);
-        logger.debug(getName() + " quits the match.");
         game.informPlayers(getLogName() + " quits the match.");
     }
 
@@ -2485,7 +2459,6 @@ public abstract class PlayerImpl implements Player, Serializable {
                 userData.resetRequestedHandPlayersList(game.getId()); // users can send request again
                 break;
         }
-        logger.trace("PASS Priority: " + playerAction);
     }
 
     @Override
@@ -2514,18 +2487,14 @@ public abstract class PlayerImpl implements Player, Serializable {
 
     @Override
     public void lostForced(Game game) {
-        logger.debug(this.getName() + " has lost gameId: " + game.getId());
         //20100423 - 603.9
         if (!this.wins) {
             this.loses = true;
             game.fireEvent(GameEvent.getEvent(GameEvent.EventType.LOST, null, null, playerId));
             game.informPlayers(this.getLogName() + " has lost the game.");
-        } else {
-            logger.debug(this.getName() + " has already won - stop lost");
         }
         // for draw - first all players that have lost have to be set to lost
         if (!hasLeft()) {
-            logger.debug("Game over playerId: " + playerId);
             game.setConcedingPlayer(playerId);
         }
     }
@@ -2550,15 +2519,12 @@ public abstract class PlayerImpl implements Player, Serializable {
         if (!opponentInGame
                 || // if no more opponent is in game the wins event may no longer be replaced
                 !game.replaceEvent(new GameEvent(GameEvent.EventType.WINS, null, null, playerId))) {
-            logger.debug("player won -> start: " + this.getName());
             if (!this.loses) {
                 //20130501 - 800.7, 801.16
                 // all opponents in range loose the game
                 for (UUID opponentId : game.getOpponents(playerId)) {
                     Player opponent = game.getPlayer(opponentId);
                     if (opponent != null && !opponent.hasLost()) {
-                        logger.debug("player won -> calling opponent lost: "
-                                + this.getName() + "  opponent: " + opponent.getName());
                         opponent.lostForced(game);
                     }
                 }
@@ -2573,13 +2539,11 @@ public abstract class PlayerImpl implements Player, Serializable {
                     }
                 }
                 if (opponentsAlive == 0 && !hasWon()) {
-                    logger.debug("player won -> No more opponents alive game won: " + this.getName());
                     game.informPlayers(this.getLogName() + " has won the game");
                     this.wins = true;
                     game.end();
                 }
             } else {
-                logger.debug("player won -> but already lost before or other players still alive: " + this.getName());
             }
         }
     }
@@ -2889,32 +2853,6 @@ public abstract class PlayerImpl implements Player, Serializable {
     @Override
     public boolean flipCoinResult(Game game) {
         return RandomUtil.nextBoolean();
-    }
-
-    private static final class RollDieResult {
-
-        // 706.2.
-        // After the roll, the number indicated on the top face of the die before any modifiers is
-        // the natural result. The instruction may include modifiers to the roll which add to or
-        // subtract from the natural result. Modifiers may also come from other sources. After
-        // considering all applicable modifiers, the final number is the result of the die roll.
-        private final int naturalResult;
-        private final int modifier;
-        private final PlanarDieRollResult planarResult;
-
-        RollDieResult(int naturalResult, int modifier, PlanarDieRollResult planarResult) {
-            this.naturalResult = naturalResult;
-            this.modifier = modifier;
-            this.planarResult = planarResult;
-        }
-
-        public int getResult() {
-            return this.naturalResult + this.modifier;
-        }
-
-        public PlanarDieRollResult getPlanarResult() {
-            return this.planarResult;
-        }
     }
 
     @Override
@@ -3397,7 +3335,6 @@ public abstract class PlayerImpl implements Player, Serializable {
     public List<List<Mana>> getAvailableTriggeredMana() {
         return availableTriggeredManaList;
     }
-    // returns only mana producers that don't require mana payment
 
     protected List<MageObject> getAvailableManaProducers(Game game) {
         List<MageObject> result = new ArrayList<>();
@@ -3437,6 +3374,7 @@ public abstract class PlayerImpl implements Player, Serializable {
         }
         return result;
     }
+    // returns only mana producers that don't require mana payment
 
     // returns only mana producers that require mana payment
     public List<Permanent> getAvailableManaProducersWithCost(Game game) {
@@ -4269,6 +4207,13 @@ public abstract class PlayerImpl implements Player, Serializable {
         return this.userData;
     }
 
+    @Override
+    public void setUserData(UserData userData) {
+        this.userData = userData;
+        getManaPool().setAutoPayment(userData.isManaPoolAutomatic());
+        getManaPool().setAutoPaymentRestricted(userData.isManaPoolAutomaticRestricted());
+    }
+
     public UserData getControllingPlayersUserData(Game game) {
         if (!isGameUnderControl()) {
             Player player = game.getPlayer(getTurnControlledBy());
@@ -4277,13 +4222,6 @@ public abstract class PlayerImpl implements Player, Serializable {
             }
         }
         return this.userData;
-    }
-
-    @Override
-    public void setUserData(UserData userData) {
-        this.userData = userData;
-        getManaPool().setAutoPayment(userData.isManaPoolAutomatic());
-        getManaPool().setAutoPaymentRestricted(userData.isManaPoolAutomaticRestricted());
     }
 
     @Override
@@ -4359,13 +4297,13 @@ public abstract class PlayerImpl implements Player, Serializable {
     }
 
     @Override
-    public void setDrawsOnOpponentsTurn(boolean drawsOnOpponentsTurn) {
-        this.drawsOnOpponentsTurn = drawsOnOpponentsTurn;
+    public boolean isDrawsOnOpponentsTurn() {
+        return drawsOnOpponentsTurn;
     }
 
     @Override
-    public boolean isDrawsOnOpponentsTurn() {
-        return drawsOnOpponentsTurn;
+    public void setDrawsOnOpponentsTurn(boolean drawsOnOpponentsTurn) {
+        this.drawsOnOpponentsTurn = drawsOnOpponentsTurn;
     }
 
     @Override
@@ -4422,14 +4360,14 @@ public abstract class PlayerImpl implements Player, Serializable {
     }
 
     @Override
-    public void setPriorityTimeLeft(int timeLeft
-    ) {
-        priorityTimeLeft = timeLeft;
+    public int getPriorityTimeLeft() {
+        return priorityTimeLeft;
     }
 
     @Override
-    public int getPriorityTimeLeft() {
-        return priorityTimeLeft;
+    public void setPriorityTimeLeft(int timeLeft
+    ) {
+        priorityTimeLeft = timeLeft;
     }
 
     @Override
@@ -4942,14 +4880,14 @@ public abstract class PlayerImpl implements Player, Serializable {
     }
 
     @Override
-    public void setMatchPlayer(MatchPlayer matchPlayer
-    ) {
-        this.matchPlayer = matchPlayer;
+    public MatchPlayer getMatchPlayer() {
+        return matchPlayer;
     }
 
     @Override
-    public MatchPlayer getMatchPlayer() {
-        return matchPlayer;
+    public void setMatchPlayer(MatchPlayer matchPlayer
+    ) {
+        this.matchPlayer = matchPlayer;
     }
 
     @Override
@@ -5100,5 +5038,31 @@ public abstract class PlayerImpl implements Player, Serializable {
     @Override
     public String toString() {
         return getName() + " (" + super.getClass().getSimpleName() + ")";
+    }
+
+    private static final class RollDieResult {
+
+        // 706.2.
+        // After the roll, the number indicated on the top face of the die before any modifiers is
+        // the natural result. The instruction may include modifiers to the roll which add to or
+        // subtract from the natural result. Modifiers may also come from other sources. After
+        // considering all applicable modifiers, the final number is the result of the die roll.
+        private final int naturalResult;
+        private final int modifier;
+        private final PlanarDieRollResult planarResult;
+
+        RollDieResult(int naturalResult, int modifier, PlanarDieRollResult planarResult) {
+            this.naturalResult = naturalResult;
+            this.modifier = modifier;
+            this.planarResult = planarResult;
+        }
+
+        public int getResult() {
+            return this.naturalResult + this.modifier;
+        }
+
+        public PlanarDieRollResult getPlanarResult() {
+            return this.planarResult;
+        }
     }
 }

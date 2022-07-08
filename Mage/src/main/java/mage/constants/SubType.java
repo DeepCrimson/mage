@@ -579,7 +579,6 @@ public enum SubType {
                 return s;
             }
         }
-        org.apache.log4j.Logger.getLogger(SubType.class).error("no subtype for " + subType + " exists");
         return null;
     }
 

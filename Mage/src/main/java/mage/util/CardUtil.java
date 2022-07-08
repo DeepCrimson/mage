@@ -42,7 +42,6 @@ import mage.target.Target;
 import mage.target.TargetCard;
 import mage.target.targetpointer.FixedTarget;
 import mage.util.functions.CopyTokenFunction;
-import org.apache.log4j.Logger;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -57,23 +56,19 @@ import java.util.stream.Stream;
  */
 public final class CardUtil {
 
-    private static final Logger logger = Logger.getLogger(CardUtil.class);
-
     public static final List<String> RULES_ERROR_INFO = ImmutableList.of("Exception occurred in rules generation");
-
-    private static final String SOURCE_EXILE_ZONE_TEXT = "SourceExileZone";
-
+    public static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
     static final String[] numberStrings = {"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
             "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"};
 
     static final String[] ordinalStrings = {"first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eightth", "ninth",
             "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth", "twentieth"};
-
-    public static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
-
+    private static final String SOURCE_EXILE_ZONE_TEXT = "SourceExileZone";
     private static final List<String> costWords = Arrays.asList(
             "put", "return", "exile", "discard", "sacrifice", "remove", "tap", "reveal", "pay"
     );
+    private static final String vowels = "aeiouAEIOU8";
+    private static final FilterCard defaultFilter = new FilterCard("card to cast");
 
     /**
      * Increase spell or ability cost to be paid.
@@ -101,7 +96,6 @@ public final class CardUtil {
         }
         return actualPossibleGenericManaReduction;
     }
-
 
     /**
      * Reduces ability cost to be paid.
@@ -956,8 +950,6 @@ public final class CardUtil {
         }
     }
 
-    private static final String vowels = "aeiouAEIOU8";
-
     public static String addArticle(String text) {
         if (text.startsWith("a ")
                 || text.startsWith("an ")
@@ -1133,7 +1125,6 @@ public final class CardUtil {
             }
             return rules;
         } catch (Exception e) {
-            logger.error("Exception in rules generation for card: " + cardName, e);
         }
         return RULES_ERROR_INFO;
     }
@@ -1202,13 +1193,6 @@ public final class CardUtil {
         }
     }
 
-    public interface SpellCastTracker {
-
-        boolean checkCard(Card card, Game game);
-
-        void addCard(Card card, Ability source, Game game);
-    }
-
     private static List<Card> getCastableComponents(Card cardToCast, FilterCard filter, Ability source, UUID playerId, Game game, SpellCastTracker spellCastTracker) {
         List<Card> cards = new ArrayList<>();
         if (cardToCast instanceof CardWithHalves) {
@@ -1228,8 +1212,6 @@ public final class CardUtil {
         }
         return cards;
     }
-
-    private static final FilterCard defaultFilter = new FilterCard("card to cast");
 
     public static boolean castSpellWithAttributesForFree(Player player, Ability source, Game game, Card card) {
         return castSpellWithAttributesForFree(player, source, game, new CardsImpl(card), StaticFilters.FILTER_CARD);
@@ -1614,5 +1596,12 @@ public final class CardUtil {
             default:
                 return "" + startingLoyalty;
         }
+    }
+
+    public interface SpellCastTracker {
+
+        boolean checkCard(Card card, Game game);
+
+        void addCard(Card card, Ability source, Game game);
     }
 }

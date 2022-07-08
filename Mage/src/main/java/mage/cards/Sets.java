@@ -10,7 +10,6 @@ import mage.constants.Rarity;
 import mage.filter.FilterMana;
 import mage.util.ClassScanner;
 import mage.util.RandomUtil;
-import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -18,14 +17,7 @@ import java.util.*;
  * @author BetaSteward_at_googlemail.com, JayDi85
  */
 public class Sets extends HashMap<String, ExpansionSet> {
-
-    private static final Logger logger = Logger.getLogger(Sets.class);
     private static final Sets instance = new Sets();
-
-    public static Sets getInstance() {
-        return instance;
-    }
-
     private final Set<String> customSets = new HashSet<>();
 
     private Sets() {
@@ -35,19 +27,12 @@ public class Sets extends HashMap<String, ExpansionSet> {
             try {
                 addSet((ExpansionSet) c.getMethod("getInstance").invoke(null));
             } catch (Exception ex) {
-                logger.error(ex);
             }
         }
     }
 
-    public void addSet(ExpansionSet set) {
-        if (containsKey(set.getCode())) {
-            throw new IllegalArgumentException("Set code " + set.getCode() + " already exists.");
-        }
-        this.put(set.getCode(), set);
-        if (set.getSetType().isCustomSet()) {
-            customSets.add(set.getCode());
-        }
+    public static Sets getInstance() {
+        return instance;
     }
 
     /**
@@ -215,5 +200,15 @@ public class Sets extends HashMap<String, ExpansionSet> {
         }
 
         return info;
+    }
+
+    public void addSet(ExpansionSet set) {
+        if (containsKey(set.getCode())) {
+            throw new IllegalArgumentException("Set code " + set.getCode() + " already exists.");
+        }
+        this.put(set.getCode(), set);
+        if (set.getSetType().isCustomSet()) {
+            customSets.add(set.getCode());
+        }
     }
 }

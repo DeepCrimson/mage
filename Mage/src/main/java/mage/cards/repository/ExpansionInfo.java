@@ -1,8 +1,5 @@
 package mage.cards.repository;
 
-import com.j256.ormlite.field.DataType;
-import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.table.DatabaseTable;
 import mage.cards.ExpansionSet;
 import mage.constants.SetType;
 
@@ -11,22 +8,14 @@ import java.util.Date;
 /**
  * @author North
  */
-@DatabaseTable(tableName = "expansion")
 public class ExpansionInfo {
 
-    @DatabaseField(unique = true)
     protected String name;
-    @DatabaseField(id = true, unique = true)
     protected String code;
-    @DatabaseField
     protected String blockName;
-    @DatabaseField(dataType = DataType.DATE_STRING, format = "yyyy-MM-dd HH:mm:ss")
     protected Date releaseDate;
-    @DatabaseField(dataType = DataType.ENUM_STRING)
     protected SetType type;
-    @DatabaseField
     protected boolean boosters;
-    @DatabaseField
     protected boolean basicLands;
 
     public ExpansionInfo() {

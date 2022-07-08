@@ -32,7 +32,6 @@ public abstract class PlainTextDeckImporter extends DeckImporter {
         List<String> fixedFile = new ArrayList<>();
         DeckCardLists deckList = new DeckCardLists();
         if (!f.exists()) {
-            logger.warn("Deckfile " + fileName + " not found.");
             return deckList;
         }
         lineCount = 0;
@@ -54,7 +53,6 @@ public abstract class PlainTextDeckImporter extends DeckImporter {
 
                 // auto-fix
                 if (saveAutoFixedFile && canFix && !originalFile.equals(fixedFile)) {
-                    logger.warn("WARNING, deck file contains errors, try to apply auto-fix and save: " + f.getAbsolutePath());
                     saveFixedDeckFile(fixedFile, f);
                 }
 
@@ -68,14 +66,11 @@ public abstract class PlainTextDeckImporter extends DeckImporter {
                         errorMessages.append(sbMessage);
                     } else {
                         // fatal error
-                        logger.fatal(sbMessage);
                     }
                 }
             } catch (Exception ex) {
-                logger.fatal(null, ex);
             }
         } catch (Exception ex) {
-            logger.fatal(null, ex);
         }
         return deckList;
     }
@@ -88,7 +83,6 @@ public abstract class PlainTextDeckImporter extends DeckImporter {
             }
             out.close();
         } catch (Exception e) {
-            logger.error("Can't save fixed deck file: " + file.getAbsolutePath() + ", reason: " + e.getMessage());
         }
     }
 

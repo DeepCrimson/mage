@@ -12,15 +12,14 @@ import mage.constants.SubLayer;
 import mage.game.Game;
 import mage.game.permanent.Permanent;
 import mage.util.CardUtil;
-import org.apache.log4j.Logger;
 
 /**
  * @author BetaSteward_at_googlemail.com
  */
 public class BoostSourceEffect extends ContinuousEffectImpl implements SourceEffect {
+    private final boolean lockedIn;
     private DynamicValue power;
     private DynamicValue toughness;
-    private final boolean lockedIn;
 
     public BoostSourceEffect(int power, int toughness, Duration duration) {
         this(power, toughness, duration, "{this}");
@@ -42,7 +41,7 @@ public class BoostSourceEffect extends ContinuousEffectImpl implements SourceEff
      * @param power
      * @param toughness
      * @param duration
-     * @param lockedIn  if true, power and toughness will be calculated only once, when the ability resolves
+     * @param lockedIn    if true, power and toughness will be calculated only once, when the ability resolves
      * @param description
      */
     public BoostSourceEffect(DynamicValue power, DynamicValue toughness, Duration duration, boolean lockedIn, String description) {
@@ -72,7 +71,6 @@ public class BoostSourceEffect extends ContinuousEffectImpl implements SourceEff
             try {
                 affectedObjectList.add(new MageObjectReference(source.getSourceId(), game));
             } catch (IllegalArgumentException ex) {
-                Logger.getLogger(BoostSourceEffect.class).error("Could not get sourceId reference: " + source.getRule());
             }
         }
         if (lockedIn) {
