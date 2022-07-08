@@ -49,7 +49,6 @@ public final class SystemUtil {
     public static final DateFormat dateFormat = new SimpleDateFormat("yy-M-dd HH:mm:ss");
 
     private static final String INIT_FILE_PATH = "config" + File.separator + "init.txt";
-    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(SystemUtil.class);
 
     // replace ref group command like @group by real commands from that group
     // example:
@@ -171,7 +170,6 @@ public final class SystemUtil {
                         );
                         break;
                     default:
-                        logger.warn("Unknown param for cards list: " + param);
                 }
             }
 
@@ -279,11 +277,9 @@ public final class SystemUtil {
 
             File f = new File(fileName);
             if (!f.exists()) {
-                logger.warn("Couldn't find init file: " + fileName);
                 return;
             }
 
-            logger.info("Parsing init file... ");
 
             // steps:
             // 1. parse groups and commands
@@ -315,7 +311,6 @@ public final class SystemUtil {
                                 currentGroup = new CommandGroup(groupName, true);
                                 groups.add(currentGroup);
                             } else {
-                                logger.warn("Special group [" + groupName + "] is not supported.");
                             }
                             continue;
                         } else {
@@ -342,7 +337,6 @@ public final class SystemUtil {
                 runGroup = groups.get(0);
             } else if (groups.size() > 1) {
                 // need to ask
-                logger.info("Found " + groups.size() + " groups. Need to select.");
 
                 // choice dialog
                 Map<String, String> list = new LinkedHashMap<>();
@@ -367,11 +361,9 @@ public final class SystemUtil {
 
             if (runGroup == null) {
                 // was canceled
-                logger.info("Command file was empty or canceled");
                 return;
             }
 
-            logger.info("Selected group [" + runGroup.name + "] with " + runGroup.commands.size() + " commands");
 
             // 3. system commands
             if (runGroup.isSpecialCommand) {
@@ -467,11 +459,9 @@ public final class SystemUtil {
                 if (line.startsWith(COMMAND_REF_PREFIX)) {
                     CommandGroup other = otherGroupRefs.getOrDefault(line, null);
                     if (other != null && !other.isSpecialCommand) {
-                        logger.info("Replace ref group " + line + " by " + other.commands.size() + " commands");
                         runGroup.commands.remove(i);
                         runGroup.commands.addAll(i, other.commands);
                     } else {
-                        logger.error("Can't find ref group: " + line);
                     }
                 }
             }
@@ -481,13 +471,11 @@ public final class SystemUtil {
 
                 CardCommandData command = parseCardCommand(line);
                 if (!command.OK) {
-                    logger.warn(command.Error + ": " + line);
                     continue;
                 }
 
                 Optional<Player> playerOptional = findPlayer(game, command.player);
                 if (!playerOptional.isPresent()) {
-                    logger.warn("Unknown player: " + line);
                     continue;
                 }
                 Player player = playerOptional.get();
@@ -534,7 +522,6 @@ public final class SystemUtil {
                     // find card info
                     CardInfo cardInfo = CardRepository.instance.findCard(command.cardName);
                     if (cardInfo == null) {
-                        logger.warn("Unknown card for stack command [" + command.cardName + "]: " + line);
                         continue;
                     }
 
@@ -579,7 +566,6 @@ public final class SystemUtil {
                 } else if ("sideboard".equalsIgnoreCase(command.zone)) {
                     gameZone = Zone.OUTSIDE;
                 } else {
-                    logger.warn("Unknown zone [" + command.zone + "]: " + line);
                     continue;
                 }
 
@@ -593,7 +579,6 @@ public final class SystemUtil {
                 }
 
                 if (cards.isEmpty()) {
-                    logger.warn("Unknown card [" + command.cardName + "]: " + line);
                     continue;
                 }
 
@@ -614,7 +599,6 @@ public final class SystemUtil {
                         cardsToLoad.forEach(card -> gameCommander.addCommander(card, player));
                         cardsToLoad.forEach(card -> gameCommander.initCommander(card, player));
                     } else {
-                        logger.fatal("Commander card can be used in commander game only: " + command.cardName);
                     }
                 } else if ("sideboard".equalsIgnoreCase(command.zone) && cardsToLoad.size() > 0) {
                     // put to sideboard
@@ -631,7 +615,6 @@ public final class SystemUtil {
                 }
             }
         } catch (Exception e) {
-            logger.fatal("", e);
         }
     }
 
@@ -664,7 +647,6 @@ public final class SystemUtil {
                 break;
         }
         game.applyEffects();
-        logger.info("Added card to player's " + zone.toString() + ": " + card.getName() + ", player = " + player.getName());
     }
 
     public static boolean putPlaneToGame(Game game, Player player, String planeClassName) {

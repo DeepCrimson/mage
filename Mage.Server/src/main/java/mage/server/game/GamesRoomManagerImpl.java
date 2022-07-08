@@ -2,7 +2,6 @@ package mage.server.game;
 
 import mage.server.managers.GamesRoomManager;
 import mage.server.managers.ManagerFactory;
-import org.apache.log4j.Logger;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -17,7 +16,6 @@ public class GamesRoomManagerImpl implements GamesRoomManager {
     private final ConcurrentHashMap<UUID, GamesRoom> rooms = new ConcurrentHashMap<>();
     private UUID mainRoomId;
     private UUID mainChatId;
-    private static final Logger logger = Logger.getLogger(GamesRoomManagerImpl.class);
 
 
     public GamesRoomManagerImpl(ManagerFactory managerFactory) {
@@ -53,7 +51,6 @@ public class GamesRoomManagerImpl implements GamesRoomManager {
         if (rooms.containsKey(roomId)) {
             return Optional.of(rooms.get(roomId));
         }
-        logger.warn("room not found : " + roomId); // after server restart users try to use old rooms on reconnect
         return Optional.empty();
 
     }

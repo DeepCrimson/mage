@@ -11,7 +11,6 @@ import mage.server.util.SystemUtil;
 import mage.view.ChatMessage.MessageColor;
 import mage.view.ChatMessage.MessageType;
 import mage.view.ChatMessage.SoundToPlay;
-import org.apache.log4j.Logger;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -27,10 +26,20 @@ import java.util.stream.Collectors;
  * @author BetaSteward_at_googlemail.com
  */
 public class ChatManagerImpl implements ChatManager {
-
-    private static final Logger logger = Logger.getLogger(ChatManagerImpl.class);
     private static final HashMap<String, String> userMessages = new HashMap<>();
-
+    private static final String COMMANDS_LIST
+            = "<br/>List of commands:"
+            + "<br/>\\history or \\h [username] - shows the history of a player"
+            + "<br/>\\me - shows the history of the current player"
+            + "<br/>\\list or \\l - Show a list of commands"
+            + "<br/>\\whisper or \\w [player name] [text] - whisper to the player with the given name"
+            + "<br/>\\card Card Name - Print oracle text for card"
+            + "<br/>[Card Name] - Show a highlighted card name"
+            + "<br/>\\ignore - shows your ignore list on this server."
+            + "<br/>\\ignore [username] - add username to ignore list (they won't be able to chat or join to your game)."
+            + "<br/>\\unignore [username] - remove a username from your ignore list on this server.";
+    final Pattern cardNamePattern = Pattern.compile("\\[(.*?)\\]");
+    final Pattern getCardTextPattern = Pattern.compile("^.card *(.*)");
     private final ManagerFactory managerFactory;
     private final ConcurrentHashMap<UUID, ChatSession> chatSessions = new ConcurrentHashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -52,7 +61,6 @@ public class ChatManagerImpl implements ChatManager {
         if (chatSession != null) {
             chatSession.join(userId);
         } else {
-            logger.trace("Chat to join not found - chatId: " + chatId + " userId: " + userId);
         }
 
     }
@@ -83,15 +91,10 @@ public class ChatManagerImpl implements ChatManager {
                     } finally {
                         w.unlock();
                     }
-                    logger.trace("Chat removed - chatId: " + chatId);
-                } else {
-                    logger.trace("Chat to destroy does not exist - chatId: " + chatId);
                 }
             }
         }
     }
-
-    final Pattern cardNamePattern = Pattern.compile("\\[(.*?)\\]");
 
     @Override
     public void broadcast(UUID chatId, String userName, String message, MessageColor color, boolean withTime, Game game, MessageType messageType, SoundToPlay soundToPlay) {
@@ -166,23 +169,8 @@ public class ChatManagerImpl implements ChatManager {
 
                 }
             }
-            chatSession.broadcast(userName, message, color, withTime, game, messageType, soundToPlay);
         }
     }
-
-    private static final String COMMANDS_LIST
-            = "<br/>List of commands:"
-            + "<br/>\\history or \\h [username] - shows the history of a player"
-            + "<br/>\\me - shows the history of the current player"
-            + "<br/>\\list or \\l - Show a list of commands"
-            + "<br/>\\whisper or \\w [player name] [text] - whisper to the player with the given name"
-            + "<br/>\\card Card Name - Print oracle text for card"
-            + "<br/>[Card Name] - Show a highlighted card name"
-            + "<br/>\\ignore - shows your ignore list on this server."
-            + "<br/>\\ignore [username] - add username to ignore list (they won't be able to chat or join to your game)."
-            + "<br/>\\unignore [username] - remove a username from your ignore list on this server.";
-
-    final Pattern getCardTextPattern = Pattern.compile("^.card *(.*)");
 
     private boolean performUserCommand(User user, String message, UUID chatId, boolean doError) {
         String command = message.substring(1).trim().toUpperCase(Locale.ENGLISH);
@@ -324,28 +312,14 @@ public class ChatManagerImpl implements ChatManager {
      */
     @Override
     public void broadcast(UUID userId, String message, MessageColor color) throws UserNotFoundException {
-        managerFactory.userManager().getUser(userId).ifPresent(user -> {
-            getChatSessions()
-                    .stream()
-                    .filter(chat -> chat.hasUser(userId))
-                    .forEach(session -> session.broadcast(user.getName(), message, color, true, null, MessageType.TALK, null));
-
-        });
     }
 
     @Override
     public void sendReconnectMessage(UUID userId) {
-        managerFactory.userManager().getUser(userId).ifPresent(user
-                -> getChatSessions()
-                .stream()
-                .filter(chat -> chat.hasUser(userId))
-                .forEach(chatSession -> chatSession.broadcast(null, user.getName() + " has reconnected", MessageColor.BLUE, true, null, MessageType.STATUS, null)));
-
     }
 
     @Override
     public void sendLostConnectionMessage(UUID userId, DisconnectReason reason) {
-        managerFactory.userManager().getUser(userId).ifPresent(user -> sendMessageToUserChats(userId, user.getName() + " " + reason.getMessage()));
     }
 
     /**
@@ -361,11 +335,6 @@ public class ChatManagerImpl implements ChatManager {
                     .filter(chat -> !chat.getChatId().equals(managerFactory.gamesRoomManager().getMainChatId())) // ignore main lobby
                     .filter(chat -> chat.hasUser(userId))
                     .collect(Collectors.toList());
-
-            if (chatSessions.size() > 0) {
-                logger.info("INFORM OPPONENTS by " + user.getName() + ": " + message);
-                chatSessions.forEach(chatSession -> chatSession.broadcast(null, message, MessageColor.BLUE, true, null, MessageType.STATUS, null));
-            }
         });
     }
 

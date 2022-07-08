@@ -7,13 +7,10 @@ import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import mage.server.managers.ConfigSettings;
 import mage.server.managers.MailClient;
-import org.apache.log4j.Logger;
 
 import javax.ws.rs.core.MediaType;
 
 public class MailgunClientImpl implements MailClient {
-
-    private static final Logger logger = Logger.getLogger(Main.class);
 
     private final ConfigSettings config;
 
@@ -23,7 +20,6 @@ public class MailgunClientImpl implements MailClient {
 
     public boolean sendMessage(String email, String subject, String text) {
         if (email.isEmpty()) {
-            logger.info("Email is not sent because the address is empty");
             return false;
         }
         Client client = Client.create();
@@ -38,7 +34,6 @@ public class MailgunClientImpl implements MailClient {
         ClientResponse response = webResource.type(MediaType.APPLICATION_FORM_URLENCODED).post(ClientResponse.class, formData);
         boolean succeeded = response.getStatus() == 200;
         if (!succeeded) {
-            logger.error("Error sending message to " + email + ". Status code: " + response.getStatus());
         }
         return succeeded;
     }

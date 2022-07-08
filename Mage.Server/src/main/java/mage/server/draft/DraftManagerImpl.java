@@ -1,12 +1,9 @@
 package mage.server.draft;
 
-import mage.game.draft.Draft;
 import mage.server.managers.DraftManager;
 import mage.server.managers.ManagerFactory;
-import mage.view.DraftPickView;
 
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -24,13 +21,6 @@ public class DraftManagerImpl implements DraftManager {
     }
 
     @Override
-    public UUID createDraftSession(Draft draft, ConcurrentHashMap<UUID, UUID> userPlayerMap, UUID tableId) {
-        DraftController draftController = new DraftController(managerFactory, draft, userPlayerMap, tableId);
-        draftControllers.put(draft.getId(), draftController);
-        return draftController.getSessionId();
-    }
-
-    @Override
     public void joinDraft(UUID draftId, UUID userId) {
         draftControllers.get(draftId).join(userId);
     }
@@ -38,11 +28,6 @@ public class DraftManagerImpl implements DraftManager {
     @Override
     public void destroyChatSession(UUID gameId) {
         draftControllers.remove(gameId);
-    }
-
-    @Override
-    public DraftPickView sendCardPick(UUID draftId, UUID userId, UUID cardId, Set<UUID> hiddenCards) {
-        return draftControllers.get(draftId).sendCardPick(userId, cardId, hiddenCards);
     }
 
     @Override

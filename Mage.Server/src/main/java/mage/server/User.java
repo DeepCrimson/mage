@@ -572,7 +572,7 @@ public class User {
     }
 
     public String getGameInfo() {
-        return '';
+        return null;
     }
 
     public void addGameWatchInfo(UUID gameId) {

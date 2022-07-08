@@ -1,7 +1,7 @@
 package mage.server.game;
 
-import mage.server.managers.ReplayManager;
 import mage.server.managers.ManagerFactory;
+import mage.server.managers.ReplayManager;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;

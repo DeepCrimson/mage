@@ -64,10 +64,6 @@ public interface TableManager {
 
     void endGame(UUID tableId);
 
-    void endDraft(UUID tableId);
-
-    void endTournament(UUID tableId);
-
     void swapSeats(UUID tableId, UUID userId, int seatNum1, int seatNum2);
 
     void construct(UUID tableId);

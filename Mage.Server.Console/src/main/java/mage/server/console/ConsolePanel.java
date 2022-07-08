@@ -3,7 +3,6 @@ package mage.server.console;
 import mage.remote.Session;
 import mage.view.TableView;
 import mage.view.UserView;
-import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -48,6 +47,7 @@ public class ConsolePanel extends javax.swing.JPanel {
     private javax.swing.JSpinner spinnerMuteDurationMinutes;
     private javax.swing.JTable tblTables;
     private javax.swing.JTable tblUsers;
+
     /**
      * Creates new form ConsolePanel
      */
@@ -549,8 +549,6 @@ class TableTableModel extends AbstractTableModel {
 }
 
 class UpdateUsersTask extends SwingWorker<Void, List<UserView>> {
-
-    private static final Logger logger = Logger.getLogger(UpdateUsersTask.class);
     private final Session session;
     private final ConsolePanel panel;
     Map<String, String> peopleIps = new HashMap<>();
@@ -591,7 +589,6 @@ class UpdateUsersTask extends SwingWorker<Void, List<UserView>> {
         for (UserView u1 : previousUsers) {
             String s = u1.getUserName() + ',' + u1.getHost();
             if (peopleIps.get(s) == null) {
-                logger.warn("Found new user: " + u1.getUserName() + ',' + u1.getHost());
                 peopleIps.put(s, "1");
             }
         }
@@ -599,7 +596,6 @@ class UpdateUsersTask extends SwingWorker<Void, List<UserView>> {
         for (UserView u1 : usersToCheck) {
             String s = u1.getUserName() + ',' + u1.getHost();
             if (peopleIps.get(s) == null) {
-                logger.warn("Found new user: " + u1.getUserName() + ',' + u1.getHost());
                 peopleIps.put(s, "1");
             }
         }
@@ -619,17 +615,13 @@ class UpdateUsersTask extends SwingWorker<Void, List<UserView>> {
         try {
             get();
         } catch (InterruptedException ex) {
-            logger.fatal("Update Users Task error", ex);
         } catch (ExecutionException ex) {
-            logger.fatal("Update Users Task error", ex);
         } catch (CancellationException ex) {
         }
     }
 }
 
 class UpdateTablesTask extends SwingWorker<Void, Collection<TableView>> {
-
-    private static final Logger logger = Logger.getLogger(UpdateTablesTask.class);
     private final Session session;
     private final UUID roomId;
     private final ConsolePanel panel;
@@ -670,9 +662,7 @@ class UpdateTablesTask extends SwingWorker<Void, Collection<TableView>> {
         try {
             get();
         } catch (InterruptedException ex) {
-            logger.fatal("Update Tables Task error", ex);
         } catch (ExecutionException ex) {
-            logger.fatal("Update Tables Task error", ex);
         } catch (CancellationException ex) {
         }
     }

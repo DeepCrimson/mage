@@ -1,11 +1,8 @@
 package mage.server.tournament;
 
 import mage.cards.decks.Deck;
-import mage.game.tournament.Tournament;
-import mage.server.managers.TournamentManager;
 import mage.server.managers.ManagerFactory;
-import mage.view.TournamentView;
-import org.apache.log4j.Logger;
+import mage.server.managers.TournamentManager;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -30,9 +27,7 @@ public class TournamentManagerImpl implements TournamentManager {
     }
 
     @Override
-    public void createTournamentSession(Tournament tournament, ConcurrentHashMap<UUID, UUID> userPlayerMap, UUID tableId) {
-        TournamentController tournamentController = new TournamentController(managerFactory, tournament, userPlayerMap, tableId);
-        controllers.put(tournament.getId(), tournamentController);
+    public void createTournamentSession(ConcurrentHashMap<UUID, UUID> userPlayerMap, UUID tableId) {
     }
 
     @Override
@@ -45,8 +40,6 @@ public class TournamentManagerImpl implements TournamentManager {
         TournamentController tournamentController = controllers.get(tournamentId);
         if (tournamentController != null) {
             tournamentController.quit(userId);
-        } else {
-            Logger.getLogger(TournamentManagerImpl.class).error("Tournament controller missing  tournamentid: " + tournamentId + " userId: " + userId);
         }
     }
 
@@ -63,15 +56,6 @@ public class TournamentManagerImpl implements TournamentManager {
     @Override
     public boolean updateDeck(UUID tournamentId, UUID playerId, Deck deck) {
         return controllers.get(tournamentId).updateDeck(playerId, deck);
-    }
-
-    @Override
-    public TournamentView getTournamentView(UUID tournamentId) {
-        TournamentController tournamentController = controllers.get(tournamentId);
-        if (tournamentController != null) {
-            return tournamentController.getTournamentView();
-        }
-        return null;
     }
 
     @Override

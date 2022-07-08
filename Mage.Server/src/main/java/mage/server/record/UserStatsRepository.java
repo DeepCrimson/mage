@@ -1,22 +1,13 @@
 package mage.server.record;
 
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.jdbc.JdbcConnectionSource;
-import com.j256.ormlite.stmt.QueryBuilder;
-import com.j256.ormlite.stmt.SelectArg;
-import com.j256.ormlite.support.ConnectionSource;
-import com.j256.ormlite.support.DatabaseConnection;
-import com.j256.ormlite.table.TableUtils;
-import mage.cards.repository.RepositoryUtil;
 import mage.game.result.ResultProtos;
 import mage.server.rating.GlickoRating;
 import mage.server.rating.GlickoRatingSystem;
-import org.apache.log4j.Logger;
 
-import java.io.File;
-import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public enum UserStatsRepository {
 
@@ -27,79 +18,20 @@ public enum UserStatsRepository {
     // raise this if db structure was changed
     private static final long DB_VERSION = 0;
 
-    private Dao<UserStats, Object> dao;
-
     UserStatsRepository() {
-        File file = new File("db");
-        if (!file.exists()) {
-            file.mkdirs();
-        }
-        try {
-            ConnectionSource connectionSource = new JdbcConnectionSource(JDBC_URL);
-            boolean obsolete = RepositoryUtil.isDatabaseObsolete(connectionSource, VERSION_ENTITY_NAME, DB_VERSION);
-
-            if (obsolete) {
-                TableUtils.dropTable(connectionSource, UserStats.class, true);
-            }
-
-            TableUtils.createTableIfNotExists(connectionSource, UserStats.class);
-            dao = DaoManager.createDao(connectionSource, UserStats.class);
-        } catch (SQLException ex) {
-            Logger.getLogger(UserStatsRepository.class).error("Error creating user_stats repository - ", ex);
-        }
     }
 
     public void add(UserStats userStats) {
-        try {
-            dao.create(userStats);
-        } catch (SQLException ex) {
-            Logger.getLogger(UserStatsRepository.class).error("Error adding a user_stats to DB - ", ex);
-        }
     }
 
     public void update(UserStats userStats) {
-        try {
-            dao.update(userStats);
-        } catch (SQLException ex) {
-            Logger.getLogger(UserStatsRepository.class).error("Error updating a user_stats in DB - ", ex);
-        }
     }
 
     public UserStats getUser(String userName) {
-        try {
-            QueryBuilder<UserStats, Object> qb = dao.queryBuilder();
-            qb.limit(1L).where().eq("userName", new SelectArg(userName));
-            List<UserStats> users = dao.query(qb.prepare());
-            if (!users.isEmpty()) {
-                return users.get(0);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(UserStatsRepository.class).error("Error getting a user from DB - ", ex);
-        }
         return null;
     }
 
-    public List<UserStats> getAllUsers() {
-        try {
-            QueryBuilder<UserStats, Object> qb = dao.queryBuilder();
-            return dao.query(qb.prepare());
-        } catch (SQLException ex) {
-            Logger.getLogger(UserStatsRepository.class).error("Error getting all users from DB - ", ex);
-        }
-        return Collections.emptyList();
-    }
-
     public long getLatestEndTimeMs() {
-        try {
-            QueryBuilder<UserStats, Object> qb = dao.queryBuilder();
-            qb.orderBy("endTimeMs", false).limit(1L);
-            List<UserStats> users = dao.query(qb.prepare());
-            if (!users.isEmpty()) {
-                return users.get(0).getEndTimeMs();
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(UserStatsRepository.class).error("Error getting the latest end time from DB - ", ex);
-        }
         return 0;
     }
 
@@ -362,16 +294,5 @@ public enum UserStatsRepository {
             this.add(userStats);
         }
         return userStats;
-    }
-
-    public void closeDB() {
-        try {
-            if (dao != null && dao.getConnectionSource() != null) {
-                DatabaseConnection conn = dao.getConnectionSource().getReadWriteConnection(dao.getTableName());
-                conn.executeStatement("shutdown compact", 0);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(UserStatsRepository.class).error("Error closing user_stats repository - ", ex);
-        }
     }
 }

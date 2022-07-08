@@ -6,7 +6,6 @@ import mage.constants.TableState;
 import mage.game.GameException;
 import mage.game.Table;
 import mage.game.match.MatchOptions;
-import mage.game.tournament.TournamentOptions;
 import mage.players.PlayerType;
 import mage.server.RoomImpl;
 import mage.server.User;
@@ -15,7 +14,6 @@ import mage.view.MatchView;
 import mage.view.RoomUsersView;
 import mage.view.TableView;
 import mage.view.UsersView;
-import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.*;
@@ -28,8 +26,6 @@ import java.util.concurrent.TimeUnit;
  * @author BetaSteward_at_googlemail.com
  */
 public class GamesRoomImpl extends RoomImpl implements GamesRoom, Serializable {
-
-    private static final Logger LOGGER = Logger.getLogger(GamesRoomImpl.class);
 
     private static final ScheduledExecutorService UPDATE_EXECUTOR = Executors.newSingleThreadScheduledExecutor();
     private static List<TableView> tableView = new ArrayList<>();
@@ -46,7 +42,6 @@ public class GamesRoomImpl extends RoomImpl implements GamesRoom, Serializable {
             try {
                 update();
             } catch (Exception ex) {
-                LOGGER.fatal("Games room update exception! " + ex.toString(), ex);
             }
 
         }, 2, 2, TimeUnit.SECONDS);
@@ -68,10 +63,6 @@ public class GamesRoomImpl extends RoomImpl implements GamesRoom, Serializable {
             } else if (matchList.size() < 50) {
                 matchList.add(new MatchView(table));
             } else {
-                // more since 50 matches finished since this match so removeUserFromAllTablesAndChat it
-                if (table.isTournament()) {
-                    managerFactory.tournamentManager().removeTournament(table.getTournament().getId());
-                }
                 this.removeTable(table.getId());
             }
         }
@@ -87,7 +78,6 @@ public class GamesRoomImpl extends RoomImpl implements GamesRoom, Serializable {
                             user.getUserData().getGeneralRating(), user.getUserData().getConstructedRating(),
                             user.getUserData().getLimitedRating()));
                 } catch (Exception ex) {
-                    LOGGER.fatal("User update exception: " + user.getName() + " - " + ex.toString(), ex);
                     users.add(new UsersView(
                             (user.getUserData() != null && user.getUserData().getFlagName() != null) ? user.getUserData().getFlagName() : "world",
                             user.getName() != null ? user.getName() : "<no name>",
@@ -145,10 +135,8 @@ public class GamesRoomImpl extends RoomImpl implements GamesRoom, Serializable {
     }
 
     @Override
-    public TableView createTournamentTable(UUID userId, TournamentOptions options) {
-        Table table = managerFactory.tableManager().createTournamentTable(this.getRoomId(), userId, options);
-        tables.put(table.getId(), table);
-        return new TableView(table);
+    public TableView createTournamentTable(UUID userId) {
+        return null;
     }
 
     @Override
@@ -170,9 +158,6 @@ public class GamesRoomImpl extends RoomImpl implements GamesRoom, Serializable {
         if (table != null) {
             table.cleanUp();
             tables.remove(tableId);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Table removed: " + tableId);
-            }
         }
     }
 

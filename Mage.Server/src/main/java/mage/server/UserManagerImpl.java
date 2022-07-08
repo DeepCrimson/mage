@@ -1,12 +1,11 @@
 package mage.server;
 
 import mage.server.User.UserState;
-import mage.server.managers.UserManager;
 import mage.server.managers.ManagerFactory;
+import mage.server.managers.UserManager;
 import mage.server.record.UserStats;
 import mage.server.record.UserStatsRepository;
 import mage.view.UserView;
-import org.apache.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -26,18 +25,12 @@ public class UserManagerImpl implements UserManager {
     private static final int SERVER_TIMEOUTS_USER_DISCONNECT_FROM_SERVER_AFTER_SECS = 3 * 60; // removes from all games and chats too (can be seen in users list with disconnected status)
     private static final int SERVER_TIMEOUTS_USER_REMOVE_FROM_SERVER_AFTER_SECS = 8 * 60; // removes from users list
 
-    private static final Logger logger = Logger.getLogger(UserManagerImpl.class);
-
     protected final ScheduledExecutorService expireExecutor = Executors.newSingleThreadScheduledExecutor();
     protected final ScheduledExecutorService userListExecutor = Executors.newSingleThreadScheduledExecutor();
-
-    private List<UserView> userInfoList = new ArrayList<>();
     private final ManagerFactory managerFactory;
-
-
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final ConcurrentHashMap<UUID, User> users = new ConcurrentHashMap<>();
-
+    private List<UserView> userInfoList = new ArrayList<>();
     private ExecutorService USER_EXECUTOR;
 
     public UserManagerImpl(ManagerFactory managerFactory) {
@@ -70,7 +63,6 @@ public class UserManagerImpl implements UserManager {
     @Override
     public Optional<User> getUser(UUID userId) {
         if (!users.containsKey(userId)) {
-            //logger.warn(String.format("User with id %s could not be found", userId), new Throwable()); // TODO: remove after session freezes fixed
             return Optional.empty();
         } else {
             return Optional.of(users.get(userId));
@@ -145,10 +137,8 @@ public class UserManagerImpl implements UserManager {
                     -> USER_EXECUTOR.execute(
                     () -> {
                         try {
-                            logger.info("USER REMOVE - " + user.getName() + " (" + reason.toString() + ")  userId: " + userId + " [" + user.getGameInfo() + ']');
                             user.removeUserFromAllTables(reason);
                             managerFactory.chatManager().removeUser(user.getId(), reason);
-                            logger.debug("USER REMOVE END - " + user.getName());
                         } catch (Exception ex) {
                             handleException(ex);
                         }
@@ -200,7 +190,6 @@ public class UserManagerImpl implements UserManager {
             Calendar calendarRemove = Calendar.getInstance();
             calendarRemove.add(Calendar.SECOND, -1 * SERVER_TIMEOUTS_USER_REMOVE_FROM_SERVER_AFTER_SECS);
             List<User> toRemove = new ArrayList<>();
-            logger.debug("Start Check Expired");
             List<User> userList = new ArrayList<>();
             final Lock r = lock.readLock();
             r.lock();
@@ -237,7 +226,6 @@ public class UserManagerImpl implements UserManager {
                     handleException(ex);
                 }
             }
-            logger.debug("Users to remove " + toRemove.size());
             final Lock w = lock.readLock();
             w.lock();
             try {
@@ -247,7 +235,6 @@ public class UserManagerImpl implements UserManager {
             } finally {
                 w.unlock();
             }
-            logger.debug("End Check Expired");
         } catch (Exception ex) {
             handleException(ex);
         }
@@ -288,12 +275,8 @@ public class UserManagerImpl implements UserManager {
     @Override
     public void handleException(Exception ex) {
         if (ex != null) {
-            logger.fatal("User manager exception ", ex);
             if (ex.getStackTrace() != null) {
-                logger.fatal(ex.getStackTrace());
             }
-        } else {
-            logger.fatal("User manager exception - null");
         }
     }
 

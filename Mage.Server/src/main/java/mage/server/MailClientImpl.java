@@ -2,7 +2,6 @@ package mage.server;
 
 import mage.server.managers.ConfigSettings;
 import mage.server.managers.MailClient;
-import org.apache.log4j.Logger;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -14,8 +13,6 @@ import java.util.Properties;
 
 public class MailClientImpl implements MailClient {
 
-    private static final Logger logger = Logger.getLogger(Main.class);
-
     private final ConfigSettings config;
 
     public MailClientImpl(ConfigSettings config) {
@@ -24,7 +21,6 @@ public class MailClientImpl implements MailClient {
 
     public boolean sendMessage(String email, String subject, String text) {
         if (email.isEmpty()) {
-            logger.info("Email is not sent because the address is empty");
             return false;
         }
 
@@ -52,7 +48,6 @@ public class MailClientImpl implements MailClient {
 
             return true;
         } catch (MessagingException ex) {
-            logger.error("Error sending message to " + email, ex);
         }
         return false;
     }

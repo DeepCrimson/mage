@@ -11,7 +11,6 @@ import mage.server.managers.ConfigSettings;
 import mage.server.managers.ManagerFactory;
 import mage.server.util.SystemUtil;
 import mage.util.RandomUtil;
-import org.apache.log4j.Logger;
 import org.jboss.remoting.callback.AsynchInvokerCallbackHandler;
 import org.jboss.remoting.callback.Callback;
 import org.jboss.remoting.callback.HandleCallbackException;
@@ -30,25 +29,20 @@ import static mage.server.DisconnectReason.LostConnection;
  * @author BetaSteward_at_googlemail.com
  */
 public class Session {
-
-    private static final Logger logger = Logger.getLogger(Session.class);
+    public static final String REGISTRATION_DISABLED_MESSAGE = "Registration has been disabled on the server. You can use any name and empty password to login.";
     private static final Pattern alphabetsPattern = Pattern.compile("[a-zA-Z]");
     private static final Pattern digitsPattern = Pattern.compile("[0-9]");
-
-    public static final String REGISTRATION_DISABLED_MESSAGE = "Registration has been disabled on the server. You can use any name and empty password to login.";
-
     private final ManagerFactory managerFactory;
     private final String sessionId;
-    private UUID userId;
-    private String host;
     private final AtomicInteger messageId = new AtomicInteger(0);
     private final Date timeConnected;
-    private boolean isAdmin = false;
     private final AsynchInvokerCallbackHandler callbackHandler;
-    private boolean valid = true;
-
     private final ReentrantLock lock;
     private final ReentrantLock callBackLock;
+    private UUID userId;
+    private String host;
+    private boolean isAdmin = false;
+    private boolean valid = true;
 
     public Session(ManagerFactory managerFactory, String sessionId, InvokerCallbackHandler callbackHandler) {
         this.managerFactory = managerFactory;
@@ -58,6 +52,29 @@ public class Session {
         this.timeConnected = new Date();
         this.lock = new ReentrantLock();
         this.callBackLock = new ReentrantLock();
+    }
+
+    private static String validateEmail(String email) {
+
+        if (email == null || email.isEmpty()) {
+            return "Email address cannot be blank";
+        }
+        AuthorizedUser authorizedUser = AuthorizedUserRepository.getInstance().getByEmail(email);
+        if (authorizedUser != null) {
+            return "Email address '" + email + "' is associated with another user";
+        }
+        return null;
+    }
+
+    public static Throwable getBasicCause(Throwable cause) {
+        Throwable t = cause;
+        while (t.getCause() != null) {
+            t = t.getCause();
+            if (Objects.equals(t, cause)) {
+                throw new IllegalArgumentException("Infinite cycle detected in causal chain");
+            }
+        }
+        return t;
     }
 
     public String registerUser(String userName, String password, String email) throws MageException {
@@ -104,17 +121,10 @@ public class Session {
             }
             if (success) {
                 String ok = "Email with initial password sent to " + email + " for a user " + userName;
-                logger.info(ok);
-                sendInfoMessageToClient(ok);
-            } else if (Main.isTestMode()) {
-                String ok = "Email sending failed. Server is in test mode. Your account registered with a password " + password + " for a user " + userName;
-                logger.info(ok);
                 sendInfoMessageToClient(ok);
             } else {
-                String err = "Email sending failed. Try use another email address or service. Or reset password by email " + email + " for a user " + userName;
-                logger.error(err);
-                sendErrorMessageToClient(err);
-                return err;
+                String ok = "Email sending failed. Server is in test mode. Your account registered with a password " + password + " for a user " + userName;
+                sendInfoMessageToClient(ok);
             }
             return null;
         }
@@ -170,18 +180,6 @@ public class Session {
         return null;
     }
 
-    private static String validateEmail(String email) {
-
-        if (email == null || email.isEmpty()) {
-            return "Email address cannot be blank";
-        }
-        AuthorizedUser authorizedUser = AuthorizedUserRepository.getInstance().getByEmail(email);
-        if (authorizedUser != null) {
-            return "Email address '" + email + "' is associated with another user";
-        }
-        return null;
-    }
-
     public String connectUser(String userName, String password) throws MageException {
         String returnMessage = connectUserHandling(userName, password);
         if (returnMessage != null) {
@@ -201,10 +199,6 @@ public class Session {
             authorizedUser = AuthorizedUserRepository.getInstance().getByName(userName);
             String errorMsg = "Wrong username or password. You must register your account first.";
             if (authorizedUser == null) {
-                return errorMsg;
-            }
-
-            if (!Main.isTestMode() && !authorizedUser.doCredentialsMatch(userName, password)) {
                 return errorMsg;
             }
 
@@ -235,11 +229,9 @@ public class Session {
                     user.updateLastActivity(null);  // minimizes possible expiration
                     this.userId = user.getId();
                     if (user.getSessionId().isEmpty()) {
-                        logger.info("Reconnecting session for " + userName);
                         reconnect = true;
                     } else {
                         //disconnect previous session
-                        logger.info("Disconnecting another user instance: " + userName);
                         managerFactory.sessionManager().disconnect(user.getSessionId(), DisconnectReason.ConnectingOtherInstance);
                     }
                 } else {
@@ -258,7 +250,6 @@ public class Session {
         if (reconnect) { // must be connected to receive the message
             Optional<GamesRoom> room = managerFactory.gamesRoomManager().getRoom(managerFactory.gamesRoomManager().getMainRoomId());
             if (!room.isPresent()) {
-                logger.warn("main room not found"); // after server restart users try to use old rooms on reconnect
                 return null;
             }
             managerFactory.chatManager().joinChat(room.get().getChatId(), userId);
@@ -276,7 +267,6 @@ public class Session {
         adminUserData.setGroupId(UserGroup.ADMIN.getGroupId());
         user.setUserData(adminUserData);
         if (!managerFactory.userManager().connectToSession(sessionId, user.getId())) {
-            logger.info("Error connecting Admin!");
         } else {
             user.setUserState(User.UserState.Connected);
         }
@@ -342,9 +332,7 @@ public class Session {
         }
         if (!user.getSessionId().equals(sessionId)) {
             // user already reconnected with another instance
-            logger.info("OLD SESSION IGNORED - " + user.getName());
         } else {
-            // logger.info("LOST CONNECTION - " + user.getName() + " id: " + userId);
         }
     }
 
@@ -353,17 +341,13 @@ public class Session {
         try {
             if (lock.tryLock(5000, TimeUnit.MILLISECONDS)) {
                 lockSet = true;
-                logger.debug("SESSION LOCK SET sessionId: " + sessionId);
             } else {
-                logger.error("SESSION LOCK - kill: userId " + userId);
             }
             managerFactory.userManager().removeUserFromAllTablesAndChat(userId, reason);
         } catch (InterruptedException ex) {
-            logger.error("SESSION LOCK - kill: userId " + userId, ex);
         } finally {
             if (lockSet) {
                 lock.unlock();
-                logger.debug("SESSION LOCK UNLOCK sessionId: " + sessionId);
 
             }
         }
@@ -380,17 +364,13 @@ public class Session {
                 callbackHandler.handleCallbackOneway(callback);
             }
         } catch (InterruptedException ex) {
-            logger.warn("SESSION LOCK - fireCallback - userId: " + userId + " messageId: " + call.getMessageId(), ex);
         } catch (HandleCallbackException ex) {
             this.valid = false;
             managerFactory.userManager().getUser(userId).ifPresent(user -> {
                 user.setUserState(User.UserState.Disconnected);
-                logger.warn("SESSION CALLBACK EXCEPTION - " + user.getName() + " userId " + userId + " messageId: " + call.getMessageId() + " - cause: " + getBasicCause(ex).toString());
-                logger.trace("Stack trace:", ex);
                 managerFactory.sessionManager().disconnect(sessionId, LostConnection);
             });
         } catch (Exception ex) {
-            logger.warn("Unspecific exception:", ex);
         } finally {
             if (lockSet) {
                 callBackLock.unlock();
@@ -410,12 +390,12 @@ public class Session {
         return host;
     }
 
-    public Date getConnectionTime() {
-        return timeConnected;
-    }
-
     void setHost(String hostAddress) {
         this.host = hostAddress;
+    }
+
+    public Date getConnectionTime() {
+        return timeConnected;
     }
 
     public void sendErrorMessageToClient(String message) {
@@ -430,17 +410,6 @@ public class Session {
         messageData.add("Information about connecting to the server");
         messageData.add(message);
         fireCallback(new ClientCallback(ClientCallbackMethod.SHOW_USERMESSAGE, null, messageData));
-    }
-
-    public static Throwable getBasicCause(Throwable cause) {
-        Throwable t = cause;
-        while (t.getCause() != null) {
-            t = t.getCause();
-            if (Objects.equals(t, cause)) {
-                throw new IllegalArgumentException("Infinite cycle detected in causal chain");
-            }
-        }
-        return t;
     }
 }
 

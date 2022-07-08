@@ -4,10 +4,8 @@ import mage.server.draft.DraftController;
 
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public interface DraftManager {
-    UUID createDraftSession(ConcurrentHashMap<UUID, UUID> userPlayerMap, UUID tableId);
 
     void joinDraft(UUID draftId, UUID userId);
 

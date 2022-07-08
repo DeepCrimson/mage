@@ -1,31 +1,21 @@
-
-
 package mage.server.game;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.util.UUID;
-import java.util.zip.GZIPInputStream;
 import mage.game.Game;
 import mage.game.GameState;
 import mage.game.GameStates;
 import mage.server.Main;
 import mage.util.CopierObjectInputStream;
 import mage.utils.StreamUtils;
-import org.apache.log4j.Logger;
 
+import java.io.*;
+import java.util.UUID;
+import java.util.zip.GZIPInputStream;
 
 
 /**
- *
  * @author BetaSteward_at_googlemail.com
  */
 public class GameReplay {
-
-    private static final Logger logger = Logger.getLogger(GameReplay.class);
 
     private final GameStates savedGame;
     private final Game game;
@@ -63,7 +53,7 @@ public class GameReplay {
         InputStream buffer = null;
         InputStream gzip = null;
         ObjectInput input = null;
-        try{
+        try {
             file = new FileInputStream("saved/" + gameId.toString() + ".game");
             buffer = new BufferedInputStream(file);
             gzip = new GZIPInputStream(buffer);
@@ -73,12 +63,8 @@ public class GameReplay {
             loadGame.loadGameStates(states);
             return loadGame;
 
-        }
-        catch(ClassNotFoundException ex) {
-            logger.fatal("Cannot load game. Class not found.", ex);
-        }
-        catch(IOException ex) {
-            logger.fatal("Cannot load game:" + gameId, ex);
+        } catch (ClassNotFoundException ex) {
+        } catch (IOException ex) {
         } finally {
             StreamUtils.closeQuietly(file);
             StreamUtils.closeQuietly(buffer);
