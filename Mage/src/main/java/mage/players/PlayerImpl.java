@@ -4395,7 +4395,6 @@ public abstract class PlayerImpl implements Player, Serializable {
         return reachedNextTurnAfterLeaving;
     }
 
-    @Override
     public boolean canJoinTable(Table table
     ) {
         return !table.userIsBanned(name);

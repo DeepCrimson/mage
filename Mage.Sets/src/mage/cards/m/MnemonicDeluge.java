@@ -12,7 +12,6 @@ import mage.filter.StaticFilters;
 import mage.game.Game;
 import mage.players.Player;
 import mage.target.common.TargetCardInGraveyard;
-import org.apache.log4j.Logger;
 
 import java.util.UUID;
 
@@ -81,9 +80,6 @@ class MnemonicDelugeEffect extends OneShotEffect {
                 player.cast(player.chooseAbilityForCast(copiedCard, game, true),
                         game, true, new ApprovingObject(source, game));
                 game.getState().setValue("PlayFromNotOwnHandZone" + copiedCard.getId(), null);
-            } else {
-                Logger.getLogger(MnemonicDelugeEffect.class).error("Mnemonic Deluge: "
-                        + "spell ability == null " + copiedCard.getName());
             }
         }
         return true;

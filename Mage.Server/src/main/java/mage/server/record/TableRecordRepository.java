@@ -19,10 +19,9 @@ public enum TableRecordRepository {
     public void add(TableRecord tableHistory) {
     }
 
+
     public List<TableRecord> getAfter(long endTimeMs) {
         return Collections.emptyList();
     }
 
-    public void closeDB() {
-    }
 }

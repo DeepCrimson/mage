@@ -1,17 +1,11 @@
 package mage.server;
 
 import mage.game.Game;
-import mage.interfaces.callback.ClientCallback;
-import mage.interfaces.callback.ClientCallbackMethod;
 import mage.server.managers.ManagerFactory;
-import mage.view.ChatMessage;
-import mage.view.ChatMessage.MessageColor;
-import mage.view.ChatMessage.MessageType;
-import mage.view.ChatMessage.SoundToPlay;
-import org.apache.log4j.Logger;
 
 import java.text.DateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
@@ -22,8 +16,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author BetaSteward_at_googlemail.com
  */
 public class ChatSession {
-
-    private static final Logger logger = Logger.getLogger(ChatSession.class);
     private static final DateFormat timeFormatter = DateFormat.getTimeInstance(DateFormat.SHORT);
 
     private final ManagerFactory managerFactory;
@@ -52,8 +44,6 @@ public class ChatSession {
                 } finally {
                     w.unlock();
                 }
-                broadcast(null, userName + " has joined (" + user.getClientVersion() + ')', MessageColor.BLUE, true, null, MessageType.STATUS, null);
-                logger.trace(userName + " joined chat " + chatId);
             }
         });
     }
@@ -62,7 +52,6 @@ public class ChatSession {
 
         try {
             if (reason == null) {
-                logger.fatal("User kill without disconnect reason  userId: " + userId);
                 reason = DisconnectReason.Undefined;
             }
             if (userId != null && clients.containsKey(userId)) {
@@ -75,73 +64,26 @@ public class ChatSession {
                     } finally {
                         w.unlock();
                     }
-                    logger.debug(userName + '(' + reason.toString() + ')' + " removed from chatId " + chatId);
                 }
                 String message = reason.getMessage();
 
                 if (!message.isEmpty()) {
-                    broadcast(null, userName + message, MessageColor.BLUE, true, null, MessageType.STATUS, null);
+                    broadcast(null, userName + message, true, null, null);
                 }
             }
         } catch (Exception ex) {
-            logger.fatal("exception: " + ex.toString());
         }
     }
 
     public boolean broadcastInfoToUser(User toUser, String message) {
-        if (clients.containsKey(toUser.getId())) {
-            toUser.fireCallback(new ClientCallback(ClientCallbackMethod.CHATMESSAGE, chatId,
-                    new ChatMessage(null, message, new Date(), null, MessageColor.BLUE, MessageType.USER_INFO, null)));
-            return true;
-        }
         return false;
     }
 
     public boolean broadcastWhisperToUser(User fromUser, User toUser, String message) {
-        if (clients.containsKey(toUser.getId())) {
-            toUser.fireCallback(new ClientCallback(ClientCallbackMethod.CHATMESSAGE, chatId,
-                    new ChatMessage(fromUser.getName(), message, new Date(), null, MessageColor.YELLOW, MessageType.WHISPER_FROM, SoundToPlay.PlayerWhispered)));
-            if (clients.containsKey(fromUser.getId())) {
-                fromUser.fireCallback(new ClientCallback(ClientCallbackMethod.CHATMESSAGE, chatId,
-                        new ChatMessage(toUser.getName(), message, new Date(), null, MessageColor.YELLOW, MessageType.WHISPER_TO, null)));
-                return true;
-            }
-        }
         return false;
     }
 
-    public void broadcast(String userName, String message, MessageColor color, boolean withTime, Game game, MessageType messageType, SoundToPlay soundToPlay) {
-        if (!message.isEmpty()) {
-            Set<UUID> clientsToRemove = new HashSet<>();
-            ClientCallback clientCallback = new ClientCallback(ClientCallbackMethod.CHATMESSAGE, chatId,
-                    new ChatMessage(userName, message, (withTime ? new Date() : null), game, color, messageType, soundToPlay));
-            List<UUID> chatUserIds = new ArrayList<>();
-            final Lock r = lock.readLock();
-            r.lock();
-            try {
-                chatUserIds.addAll(clients.keySet());
-            } finally {
-                r.unlock();
-            }
-            for (UUID userId : chatUserIds) {
-                Optional<User> user = managerFactory.userManager().getUser(userId);
-                if (user.isPresent()) {
-                    user.get().fireCallback(clientCallback);
-                } else {
-                    clientsToRemove.add(userId);
-                }
-            }
-            if (!clientsToRemove.isEmpty()) {
-                final Lock w = lock.readLock();
-                w.lock();
-                try {
-                    clients.keySet().removeAll(clientsToRemove);
-                } finally {
-                    w.unlock();
-                }
-            }
-
-        }
+    public void broadcast(String userName, String message, boolean withTime, Game game) {
     }
 
     /**

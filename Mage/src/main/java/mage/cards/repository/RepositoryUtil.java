@@ -1,5 +1,4 @@
 package mage.cards.repository;
-
 import java.sql.SQLException;
 
 /**
@@ -28,11 +27,6 @@ return false;
 
     public static long getDatabaseVersion(String entityName) throws SQLException {
 return 0;
-    }
-
-    public static boolean isDatabaseEmpty() {
-        return ExpansionRepository.instance.getSetByCode("GRN") == null
-                || CardRepository.instance.findCard("Island") == null;
     }
 
 }

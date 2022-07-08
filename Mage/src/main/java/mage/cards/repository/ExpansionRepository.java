@@ -17,6 +17,7 @@ public enum ExpansionRepository {
     private static final String VERSION_ENTITY_NAME = "expansion";
     private static final long EXPANSION_DB_VERSION = 5;
     private static final long EXPANSION_CONTENT_VERSION = 18;
+
     private RepositoryEventSource eventSource = new RepositoryEventSource();
 
     ExpansionRepository() {
@@ -31,6 +32,11 @@ public enum ExpansionRepository {
 
     public List<String> getSetCodes() {
         return null;
+
+    }
+
+    public ExpansionInfo[] getWithBoostersSortedByReleaseDate() {
+        return new ExpansionInfo[0];
     }
 
     public List<ExpansionInfo> getSetsWithBasicLandsByReleaseDate() {
@@ -51,6 +57,17 @@ public enum ExpansionRepository {
 
     public List<ExpansionInfo> getAll() {
         return Collections.emptyList();
+    }
+
+    public List<String> getAllSetNames() {
+        return Collections.emptyList();
+    }
+
+    public long getContentVersionFromDB() {
+        return 0;
+    }
+
+    public void setContentVersion(long version) {
     }
 
     public long getContentVersionConstant() {

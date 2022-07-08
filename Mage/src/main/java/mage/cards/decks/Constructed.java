@@ -4,7 +4,6 @@ import mage.cards.Card;
 import mage.cards.repository.CardInfo;
 import mage.cards.repository.CardRepository;
 import mage.constants.Rarity;
-import org.apache.log4j.Logger;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -13,8 +12,6 @@ import java.util.Map.Entry;
  * @author BetaSteward_at_googlemail.com
  */
 public class Constructed extends DeckValidator {
-
-    private static final Logger logger = Logger.getLogger(Constructed.class);
 
     private static final List<String> anyNumberCardsAllowed = new ArrayList<>(Arrays.asList(
             "Relentless Rats", "Shadowborn Apostle", "Rat Colony",

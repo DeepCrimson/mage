@@ -5,9 +5,7 @@ package mage.cards.repository;
  */
 public class DatabaseVersion {
 
-
     protected String entity;
-
 
     protected Long version;
 

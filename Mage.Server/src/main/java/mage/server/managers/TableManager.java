@@ -4,12 +4,8 @@ import mage.MageException;
 import mage.cards.decks.DeckCardLists;
 import mage.game.GameException;
 import mage.game.Table;
-import mage.game.draft.Draft;
 import mage.game.match.Match;
 import mage.game.match.MatchOptions;
-import mage.game.tournament.Tournament;
-import mage.game.tournament.TournamentOptions;
-import mage.game.tournament.TournamentPlayer;
 import mage.players.PlayerType;
 import mage.server.TableController;
 
@@ -22,7 +18,7 @@ public interface TableManager {
 
     Table createTable(UUID roomId, MatchOptions options);
 
-    Table createTournamentTable(UUID roomId, UUID userId, TournamentOptions options);
+    Table createTournamentTable(UUID roomId, UUID userId);
 
     Table getTable(UUID tableId);
 
@@ -62,15 +58,15 @@ public interface TableManager {
 
     void startTournament(UUID userId, UUID roomId, UUID tableId);
 
-    void startDraft(UUID tableId, Draft draft);
+    void startDraft(UUID tableId);
 
     boolean watchTable(UUID userId, UUID tableId);
 
     void endGame(UUID tableId);
 
-    void endDraft(UUID tableId, Draft draft);
+    void endDraft(UUID tableId);
 
-    void endTournament(UUID tableId, Tournament tournament);
+    void endTournament(UUID tableId);
 
     void swapSeats(UUID tableId, UUID userId, int seatNum1, int seatNum2);
 
@@ -78,7 +74,7 @@ public interface TableManager {
 
     void initTournament(UUID tableId);
 
-    void addPlayer(UUID userId, UUID tableId, TournamentPlayer player) throws GameException;
+    void addPlayer(UUID userId, UUID tableId) throws GameException;
 
     void removeTable(UUID tableId);
 

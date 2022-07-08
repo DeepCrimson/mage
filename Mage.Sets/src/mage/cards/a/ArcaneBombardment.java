@@ -21,7 +21,6 @@ import mage.players.Player;
 import mage.util.CardUtil;
 import mage.util.RandomUtil;
 import mage.watchers.Watcher;
-import org.apache.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -114,9 +113,6 @@ class ArcaneBombardmentEffect extends OneShotEffect {
                         game, true, new ApprovingObject(source, game)
                 );
                 game.getState().setValue("PlayFromNotOwnHandZone" + copiedCard.getId(), null);
-            } else {
-                Logger.getLogger(ArcaneBombardmentEffect.class).error("Arcane Bombardment: "
-                        + "spell ability == null " + copiedCard.getName());
             }
         }
         return true;

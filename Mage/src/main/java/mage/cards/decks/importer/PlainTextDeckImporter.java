@@ -64,8 +64,6 @@ public abstract class PlainTextDeckImporter extends DeckImporter {
                     if (errorMessages != null) {
                         // normal output for user
                         errorMessages.append(sbMessage);
-                    } else {
-                        // fatal error
                     }
                 }
             } catch (Exception ex) {

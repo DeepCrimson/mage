@@ -17,6 +17,7 @@ import java.util.*;
  * @author BetaSteward_at_googlemail.com, JayDi85
  */
 public class Sets extends HashMap<String, ExpansionSet> {
+
     private static final Sets instance = new Sets();
     private final Set<String> customSets = new HashSet<>();
 

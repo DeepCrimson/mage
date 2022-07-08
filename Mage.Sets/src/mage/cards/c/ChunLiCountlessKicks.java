@@ -16,7 +16,6 @@ import mage.game.Game;
 import mage.players.Player;
 import mage.target.common.TargetCardInYourGraveyard;
 import mage.target.targetadjustment.TargetAdjuster;
-import org.apache.log4j.Logger;
 
 import java.util.UUID;
 
@@ -146,9 +145,6 @@ class ChunLiCountlessKicksCastEffect extends OneShotEffect {
                         game, false, new ApprovingObject(source, game)
                 );
                 game.getState().setValue("PlayFromNotOwnHandZone" + copiedCard.getId(), null);
-            } else {
-                Logger.getLogger(ChunLiCountlessKicksCastEffect.class).error("Chun Li, Countless Kicks: "
-                        + "spell ability == null " + copiedCard.getName());
             }
         }
         return true;
