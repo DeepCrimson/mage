@@ -1,10 +1,5 @@
 package mage.server.managers;
 
-import mage.server.util.config.GamePlugin;
-import mage.server.util.config.Plugin;
-
-import java.util.List;
-
 public interface ConfigSettings {
     String getServerAddress();
 
@@ -59,14 +54,4 @@ public interface ConfigSettings {
     String getMailPassword();
 
     String getMailFromAddress();
-
-    List<Plugin> getPlayerTypes();
-
-    List<GamePlugin> getGameTypes();
-
-    List<GamePlugin> getTournamentTypes();
-
-    List<Plugin> getDraftCubes();
-
-    List<Plugin> getDeckTypes();
 }

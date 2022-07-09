@@ -2,20 +2,16 @@ package mage.server;
 
 import mage.cards.ExpansionSet;
 import mage.cards.Sets;
-import mage.cards.decks.DeckValidatorFactory;
 import mage.cards.repository.CardScanner;
 import mage.cards.repository.PluginClassloaderRegistery;
 import mage.cards.repository.RepositoryUtil;
-import mage.game.match.MatchType;
 import mage.interfaces.MageServer;
-import mage.remote.Connection;
-import mage.server.draft.CubeFactory;
 import mage.server.managers.ConfigSettings;
 import mage.server.managers.ManagerFactory;
 import mage.server.record.UserStatsRepository;
-import mage.server.util.*;
-import mage.server.util.config.GamePlugin;
-import mage.server.util.config.Plugin;
+import mage.server.util.PluginClassLoader;
+import mage.server.util.ServerMessagesUtil;
+import mage.server.util.SystemUtil;
 import mage.utils.MageVersion;
 import org.jboss.remoting.*;
 import org.jboss.remoting.callback.InvokerCallbackHandler;
@@ -31,7 +27,6 @@ import javax.management.MBeanServer;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -83,18 +78,6 @@ public final class Main {
             }
         }
 
-        final String configPath = Optional.ofNullable(System.getProperty(configPathProp))
-                .orElse(defaultConfigPath);
-
-        final ConfigWrapper config = new ConfigWrapper(ConfigFactory.loadFromFile(configPath));
-
-
-        if (config.isAuthenticationActivated()) {
-            if (!AuthorizedUserRepository.getInstance().checkAlterAndMigrateAuthorizedUser()) {
-                return;
-            }
-        }
-
         // db init and updates checks (e.g. cleanup cards db on new version)
         RepositoryUtil.bootstrapLocalDb();
 
@@ -131,63 +114,6 @@ public final class Main {
         }
 
         UserStatsRepository.instance.updateUserStats();
-
-        int gameTypes = 0;
-        for (GamePlugin plugin : config.getGameTypes()) {
-            gameTypes++;
-        }
-
-        int tourneyTypes = 0;
-        for (GamePlugin plugin : config.getTournamentTypes()) {
-            tourneyTypes++;
-        }
-
-        int playerTypes = 0;
-        for (Plugin plugin : config.getPlayerTypes()) {
-            playerTypes++;
-        }
-
-        int cubeTypes = 0;
-        for (Plugin plugin : config.getDraftCubes()) {
-            cubeTypes++;
-        }
-
-        int deckTypes = 0;
-        for (Plugin plugin : config.getDeckTypes()) {
-            deckTypes++;
-        }
-
-        for (ExtensionPackage pkg : extensions) {
-            for (Map.Entry<String, Class> entry : pkg.getDraftCubes().entrySet()) {
-                cubeTypes++;
-                CubeFactory.instance.addDraftCube(entry.getKey(), entry.getValue());
-            }
-            for (Map.Entry<String, Class> entry : pkg.getDeckTypes().entrySet()) {
-                deckTypes++;
-                DeckValidatorFactory.instance.addDeckType(entry.getKey(), entry.getValue());
-            }
-        }
-        if (gameTypes == 0) {
-        }
-
-        Connection connection = new Connection("&maxPoolSize=" + config.getMaxPoolSize());
-        connection.setHost(config.getServerAddress());
-        connection.setPort(config.getPort());
-        final ManagerFactory managerFactory = new MainManagerFactory(config);
-        try {
-            // Parameter: serializationtype => jboss
-            InvokerLocator serverLocator = new InvokerLocator(connection.getURI());
-            if (!isAlreadyRunning(config, serverLocator)) {
-                server = new MageTransporterServer(managerFactory, serverLocator, new MageServerImpl(managerFactory, adminPassword, testMode), MageServer.class.getName(), new MageServerInvocationHandler(managerFactory));
-                server.start();
-
-                if (testMode) {
-                }
-                initStatistics();
-            } else {
-            }
-        } catch (Exception ex) {
-        }
     }
 
     static void initStatistics() {
@@ -249,6 +175,7 @@ public final class Main {
         }
 
     }
+
     static class MageTransporterServer extends TransporterServer {
 
         protected Connector connector;
@@ -342,26 +269,6 @@ public final class Main {
             managerFactory.sessionManager().disconnect(sessionId, DisconnectReason.Disconnected);
         }
 
-    }
-
-    private static Class<?> loadPlugin(Plugin plugin) {
-        try {
-            classLoader.addURL(new File(pluginFolder, plugin.getJar()).toURI().toURL());
-            return Class.forName(plugin.getClassName(), true, classLoader);
-        } catch (ClassNotFoundException ex) {
-        } catch (MalformedURLException ex) {
-        }
-        return null;
-    }
-
-    private static MatchType loadGameType(GamePlugin plugin) {
-        try {
-            classLoader.addURL(new File(pluginFolder, plugin.getJar()).toURI().toURL());
-            return (MatchType) Class.forName(plugin.getTypeName(), true, classLoader).getConstructor().newInstance();
-        } catch (ClassNotFoundException ex) {
-        } catch (Exception ex) {
-        }
-        return null;
     }
 
     private static void deleteSavedGames() {
