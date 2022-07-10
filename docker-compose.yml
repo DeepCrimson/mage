@@ -1,0 +1,19 @@
+version: "3.5"
+services:
+  backend:
+    image: mage-spring-boot
+    build:
+      context: .
+      dockerfile: Dockerfile-backend
+    ports:
+      - "8081:8081"
+    volumes:
+      - ${APPLICATION_ROOT_FOLDER}:/usr/src/app
+    # Keep the container running and tail all logs
+#    command: tail -F /dev/null
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"   # number of files or file count
+        max-size: "10m" # file size
+

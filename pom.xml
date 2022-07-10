@@ -57,24 +57,10 @@
         <module>Mage</module>
         <module>Mage.Server</module>
         <module>Mage.Sets</module>
-        <module>Mage.Server.Console</module>
         <module>Mage.SpringBoot</module>
-        <module>Mage.Verify</module>
     </modules>
 
     <repositories>
-        <repository>
-            <id>jboss-public-repository</id>
-            <name>JBoss Repository</name>
-            <url>https://repository.jboss.org/nexus/content/groups/public</url>
-            <!-- These optional flags are designed to speed up your builds by reducing remote server calls -->
-            <releases>
-                <updatePolicy>never</updatePolicy>
-            </releases>
-            <snapshots>
-                <updatePolicy>daily</updatePolicy>
-            </snapshots>
-        </repository>
         <repository>
             <id>local-project-repo</id>
             <url>file://${basedir}/repository</url>
