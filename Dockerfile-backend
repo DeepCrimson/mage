@@ -13,8 +13,6 @@ RUN mkdir -p /usr/share/maven /usr/share/maven/ref \
   && rm -f /tmp/apache-maven.tar.gz \
   && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
 
-ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
-
 COPY server-entrypoint.sh /usr/local/bin/server-entrypoint.sh
 
 #Start application
@@ -22,7 +20,3 @@ WORKDIR /usr/src/app
 COPY . .
 RUN chmod +x /usr/local/bin/server-entrypoint.sh \
     && /usr/local/bin/server-entrypoint.sh
-#ENTRYPOINT ["/usr/local/bin/server-entrypoint.sh"]
-#CMD ["mvn clean install -DskipTests --fail-never"]
-
-#EXPOSE 8082
