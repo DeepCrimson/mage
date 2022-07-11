@@ -1,0 +1,4 @@
+# All available queries on the GraphQL server
+type Query {
+    card(id: ID!): Card
+}

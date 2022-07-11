@@ -5,7 +5,6 @@ import mage.game.GameState;
 import mage.game.GameStates;
 import mage.server.Main;
 import mage.util.CopierObjectInputStream;
-import mage.utils.StreamUtils;
 
 import java.io.*;
 import java.util.UUID;
@@ -65,11 +64,6 @@ public class GameReplay {
 
         } catch (ClassNotFoundException ex) {
         } catch (IOException ex) {
-        } finally {
-            StreamUtils.closeQuietly(file);
-            StreamUtils.closeQuietly(buffer);
-            StreamUtils.closeQuietly(input);
-            StreamUtils.closeQuietly(gzip);
         }
         return null;
     }

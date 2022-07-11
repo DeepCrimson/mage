@@ -95,6 +95,12 @@
             <groupId>org.unbescape</groupId>
             <artifactId>unbescape</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.mage</groupId>
+            <artifactId>mage-common</artifactId>
+            <version>1.4.50</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>

@@ -13,10 +13,11 @@ RUN mkdir -p /usr/share/maven /usr/share/maven/ref \
   && rm -f /tmp/apache-maven.tar.gz \
   && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
 
-COPY server-entrypoint.sh /usr/local/bin/server-entrypoint.sh
+#COPY server-entrypoint.sh /usr/local/bin/server-entrypoint.sh
 
 #Start application
 WORKDIR /usr/src/app
 COPY . .
-RUN chmod +x /usr/local/bin/server-entrypoint.sh \
-    && /usr/local/bin/server-entrypoint.sh
+#RUN chmod +x /usr/local/bin/server-entrypoint.sh \
+#    && /usr/local/bin/server-entrypoint.sh
+RUN mvn install -DskipTests

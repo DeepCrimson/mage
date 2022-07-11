@@ -16,8 +16,6 @@ import mage.interfaces.Action;
 import mage.interfaces.ActionWithResult;
 import mage.interfaces.MageServer;
 import mage.interfaces.ServerState;
-import mage.interfaces.callback.ClientCallback;
-import mage.interfaces.callback.ClientCallbackMethod;
 import mage.players.PlayerType;
 import mage.players.net.UserData;
 import mage.remote.MageVersionException;
@@ -27,13 +25,10 @@ import mage.server.game.GamesRoom;
 import mage.server.game.PlayerFactory;
 import mage.server.managers.ManagerFactory;
 import mage.server.services.impl.FeedbackServiceImpl;
-import mage.server.tournament.TournamentFactory;
 import mage.server.util.ServerMessagesUtil;
 import mage.server.util.SystemUtil;
 import mage.utils.*;
 import mage.view.*;
-import mage.view.ChatMessage.MessageColor;
-import org.unbescape.html.HtmlEscape;
 
 import javax.management.timer.Timer;
 import java.security.SecureRandom;
@@ -365,13 +360,6 @@ public class MageServerImpl implements MageServer {
     @Override
     //FIXME: why no sessionId here???
     public void sendChatMessage(final UUID chatId, final String userName, final String message) throws MageException {
-        try {
-            callExecutor.execute(
-                    () -> managerFactory.chatManager().broadcast(chatId, userName, HtmlEscape.escapeHtml4(message), MessageColor.BLUE, true, null, ChatMessage.MessageType.TALK, null)
-            );
-        } catch (Exception ex) {
-            handleException(ex);
-        }
     }
 
     @Override
@@ -791,7 +779,6 @@ public class MageServerImpl implements MageServer {
         try {
             return new ServerState(
                     GameFactory.instance.getGameTypes(),
-                    TournamentFactory.instance.getTournamentTypes(),
                     PlayerFactory.instance.getPlayerTypes().toArray(new PlayerType[PlayerFactory.instance.getPlayerTypes().size()]),
                     DeckValidatorFactory.instance.getDeckTypes().toArray(new String[DeckValidatorFactory.instance.getDeckTypes().size()]),
                     CubeFactory.instance.getDraftCubes().toArray(new String[CubeFactory.instance.getDraftCubes().size()]),
@@ -961,17 +948,6 @@ public class MageServerImpl implements MageServer {
 
     @Override
     public void sendBroadcastMessage(final String sessionId, final String message) throws MageException {
-        if (message != null) {
-            execute("sendBroadcastMessage", sessionId, () -> {
-                for (User user : managerFactory.userManager().getUsers()) {
-                    if (message.toLowerCase(Locale.ENGLISH).startsWith("warn")) {
-                        user.fireCallback(new ClientCallback(ClientCallbackMethod.SERVER_MESSAGE, null, new ChatMessage("SERVER", message, null, null, MessageColor.RED)));
-                    } else {
-                        user.fireCallback(new ClientCallback(ClientCallbackMethod.SERVER_MESSAGE, null, new ChatMessage("SERVER", message, null, null, MessageColor.BLUE)));
-                    }
-                }
-            }, true);
-        }
     }
 
     private void sendErrorMessageToClient(final String sessionId, final String message) throws MageException {

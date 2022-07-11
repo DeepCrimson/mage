@@ -7,7 +7,6 @@ import mage.game.Game;
 import mage.game.GameOptions;
 import mage.server.managers.GameManager;
 import mage.server.managers.ManagerFactory;
-import mage.view.GameView;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,15 +33,7 @@ public class GameManagerImpl implements GameManager {
 
     @Override
     public UUID createGameSession(Game game, ConcurrentHashMap<UUID, UUID> userPlayerMap, UUID tableId, UUID choosingPlayerId, GameOptions gameOptions) {
-        GameController gameController = new GameController(managerFactory, game, userPlayerMap, tableId, choosingPlayerId, gameOptions);
-        final Lock w = gameControllersLock.writeLock();
-        w.lock();
-        try {
-            gameControllers.put(game.getId(), gameController);
-        } finally {
-            w.unlock();
-        }
-        return gameController.getSessionId();
+        return null;
     }
 
     private GameController getGameControllerSafe(UUID gameId) {
@@ -184,15 +175,6 @@ public class GameManagerImpl implements GameManager {
             return gameController.saveGame();
         }
         return false;
-    }
-
-    @Override
-    public GameView getGameView(UUID gameId, UUID playerId) {
-        GameController gameController = getGameControllerSafe(gameId);
-        if (gameController != null) {
-            return gameController.getGameView(playerId);
-        }
-        return null;
     }
 
     @Override

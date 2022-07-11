@@ -1,0 +1,8 @@
+type Card {
+    id: ID!
+    name: String!
+    expansionSetCode: String!
+    rarity: String!
+    rules: String
+    cardType: String
+}

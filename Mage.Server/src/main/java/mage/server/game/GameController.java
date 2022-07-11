@@ -114,10 +114,8 @@ public class GameController implements GameCallback {
                                 updateGame();
                                 break;
                             case INFO:
-                                managerFactory.chatManager().broadcast(chatId, "", event.getMessage(), MessageColor.BLACK, true, event.getGame(), MessageType.GAME, null);
                                 break;
                             case STATUS:
-                                managerFactory.chatManager().broadcast(chatId, "", event.getMessage(), MessageColor.ORANGE, event.getWithTime(), event.getWithTurnInfo() ? event.getGame() : null, MessageType.GAME, null);
                                 break;
                             case ERROR:
                                 error(event.getMessage(), event.getException());

@@ -55,6 +55,7 @@
 
     <modules>
         <module>Mage</module>
+        <module>Mage.Common</module>
         <module>Mage.Server</module>
         <module>Mage.Sets</module>
         <module>Mage.SpringBoot</module>

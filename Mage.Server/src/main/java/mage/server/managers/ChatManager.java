@@ -22,8 +22,6 @@ public interface ChatManager {
 
     void broadcast(UUID chatId, String userName, String message, ChatMessage.MessageColor color, boolean withTime, Game game, ChatMessage.MessageType messageType, ChatMessage.SoundToPlay soundToPlay);
 
-    void broadcast(UUID userId, String message, ChatMessage.MessageColor color) throws UserNotFoundException;
-
     void sendReconnectMessage(UUID userId);
 
     void sendLostConnectionMessage(UUID userId, DisconnectReason reason);

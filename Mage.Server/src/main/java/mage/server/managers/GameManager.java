@@ -6,7 +6,6 @@ import mage.constants.PlayerAction;
 import mage.game.Game;
 import mage.game.GameOptions;
 import mage.server.game.GameController;
-import mage.view.GameView;
 
 import java.util.Map;
 import java.util.Optional;
@@ -45,8 +44,6 @@ public interface GameManager {
     void removeGame(UUID gameId);
 
     boolean saveGame(UUID gameId);
-
-    GameView getGameView(UUID gameId, UUID playerId);
 
     int getNumberActiveGames();
 

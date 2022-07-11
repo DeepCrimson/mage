@@ -1,0 +1,7 @@
+# GraphQL query with the query and name keywords
+query getCards {
+  card(id: "0") {
+    name
+    id
+  }
+}

@@ -8,9 +8,6 @@ import mage.server.game.GameController;
 import mage.server.managers.ChatManager;
 import mage.server.managers.ManagerFactory;
 import mage.server.util.SystemUtil;
-import mage.view.ChatMessage.MessageColor;
-import mage.view.ChatMessage.MessageType;
-import mage.view.ChatMessage.SoundToPlay;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -21,6 +18,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import mage.game.Game;
+import mage.util.CardUtil;
+import mage.view.ChatMessage;
+
+import java.io.Serializable;
+import java.util.Date;
 
 /**
  * @author BetaSteward_at_googlemail.com
@@ -97,79 +101,7 @@ public class ChatManagerImpl implements ChatManager {
     }
 
     @Override
-    public void broadcast(UUID chatId, String userName, String message, MessageColor color, boolean withTime, Game game, MessageType messageType, SoundToPlay soundToPlay) {
-        ChatSession chatSession = chatSessions.get(chatId);
-        if (chatSession != null) {
-            if (message.startsWith("\\") || message.startsWith("/")) {
-                Optional<User> user = managerFactory.userManager().getUserByName(userName);
-                if (user.isPresent()) {
-                    if (!performUserCommand(user.get(), message, chatId, false)) {
-                        performUserCommand(user.get(), message, chatId, true);
-                    }
-                    return;
-                }
-            }
-
-            if (messageType != MessageType.GAME && !userName.isEmpty()) {
-                Optional<User> u = managerFactory.userManager().getUserByName(userName);
-                if (u.isPresent()) {
-
-                    User user = u.get();
-                    String messageId = chatId.toString() + message;
-                    if (messageId.equals(userMessages.get(userName))) {
-                        // prevent identical messages
-                        String informUser = "Your message appears to be identical to your last message";
-                        chatSessions.get(chatId).broadcastInfoToUser(user, informUser);
-                        return;
-                    }
-
-                    if (message.length() > 500) {
-                        message = message.replaceFirst("^(.{500}).*", "$1 (rest of message truncated)");
-                    }
-
-                    String messageToCheck = message;
-                    Matcher matchPattern = cardNamePattern.matcher(message);
-                    while (matchPattern.find()) {
-                        String cardName = matchPattern.group(1);
-                        CardInfo cardInfo = CardRepository.instance.findPreferredCoreExpansionCard(cardName, true);
-                        if (cardInfo != null) {
-                            String colour = "silver";
-                            if (cardInfo.getCard().getColor(null).isMulticolored()) {
-                                colour = "yellow";
-                            } else if (cardInfo.getCard().getColor(null).isWhite()) {
-                                colour = "white";
-                            } else if (cardInfo.getCard().getColor(null).isBlue()) {
-                                colour = "blue";
-                            } else if (cardInfo.getCard().getColor(null).isBlack()) {
-                                colour = "black";
-                            } else if (cardInfo.getCard().getColor(null).isRed()) {
-                                colour = "red";
-                            } else if (cardInfo.getCard().getColor(null).isGreen()) {
-                                colour = "green";
-                            }
-                            messageToCheck = messageToCheck.replaceFirst("\\[" + cardName + "\\]", "card");
-                            String displayCardName = "<font bgcolor=orange color=" + colour + '>' + cardName + "</font>";
-                            message = message.replaceFirst("\\[" + cardName + "\\]", displayCardName);
-                        }
-                    }
-
-                    userMessages.put(userName, messageId);
-
-                    if (messageType == MessageType.TALK) {
-                        if (user.getChatLockedUntil() != null) {
-                            if (user.getChatLockedUntil().compareTo(Calendar.getInstance().getTime()) > 0) {
-                                chatSessions.get(chatId).broadcastInfoToUser(user, "Your chat is muted until " + SystemUtil.dateFormat.format(user.getChatLockedUntil()));
-                                return;
-                            } else {
-                                user.setChatLockedUntil(null);
-                            }
-                        }
-
-                    }
-
-                }
-            }
-        }
+    public void broadcast(UUID chatId, String userName, String message, ChatMessage.MessageColor color, boolean withTime, Game game, ChatMessage.MessageType messageType, ChatMessage.SoundToPlay soundToPlay) {
     }
 
     private boolean performUserCommand(User user, String message, UUID chatId, boolean doError) {
@@ -299,19 +231,6 @@ public class ChatManagerImpl implements ChatManager {
             return true;
         }
         return false;
-    }
-
-    /**
-     * use mainly for announcing that a user connection was lost or that a user
-     * has reconnected
-     *
-     * @param userId
-     * @param message
-     * @param color
-     * @throws mage.server.exceptions.UserNotFoundException
-     */
-    @Override
-    public void broadcast(UUID userId, String message, MessageColor color) throws UserNotFoundException {
     }
 
     @Override
